@@ -108,16 +108,18 @@ function tkm_upload_hint_text()
     $exts = TKM_Upload_File::allowed_extensions();
     $max_mb = round(TKM_Upload_File::max_size_bytes() / (1024 * 1024), 1);
 
-    $parts = [];
-    if (!empty($exts)) {
-        $parts[] = 'پسوندهای مجاز: ' . implode('، ', $exts);
-    }
-    $parts[] = 'حداکثر حجم هر فایل: ' . convert_to_persian_numbers($max_mb) . ' مگابایت';
+    $parts = ['تا ' . convert_to_persian_numbers($max_mb) . ' مگابایت'];
     if (TKM_Upload_File::is_multiple()) {
         $parts[] = 'حداکثر ' . convert_to_persian_numbers(TKM_Upload_File::max_files()) . ' فایل';
     }
+    if (!empty($exts)) {
+        // A short, readable hint; the full list is enforced by the server and shown on error.
+        $shown = array_slice($exts, 0, 5);
+        $rest = count($exts) - count($shown);
+        $parts[] = strtoupper(implode('، ', $shown)) . ($rest > 0 ? ' و ' . convert_to_persian_numbers($rest) . ' قالب دیگر' : '');
+    }
 
-    return implode(' — ', $parts);
+    return implode(' · ', $parts);
 }
 
 /**

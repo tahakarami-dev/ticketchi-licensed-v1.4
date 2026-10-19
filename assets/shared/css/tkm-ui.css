@@ -269,7 +269,7 @@
 /* toggle switch */
 .tkm-ui .tkm-switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: var(--tkm-fs-sm); font-weight: 500; margin: 0; }
 .tkm-ui .tkm-switch input { position: absolute; opacity: 0; pointer-events: none; }
-.tkm-ui .tkm-switch__track { width: 38px; height: 22px; border-radius: 99px; background: var(--tkm-border-strong); position: relative; transition: background var(--tkm-dur); flex: none; }
+.tkm-ui .tkm-switch__track { display: inline-block; width: 38px; height: 22px; border-radius: 99px; background: var(--tkm-border-strong); position: relative; transition: background var(--tkm-dur); flex: none; }
 .tkm-ui .tkm-switch__track::after { content: ""; position: absolute; top: 3px; right: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform var(--tkm-dur) var(--tkm-ease); }
 .tkm-ui .tkm-switch input:checked + .tkm-switch__track { background: var(--tkm-primary); }
 .tkm-ui .tkm-switch input:checked + .tkm-switch__track::after { transform: translateX(-16px); }
@@ -285,8 +285,8 @@
 .tkm-ui .tkm-dropzone:hover, .tkm-ui .tkm-dropzone.is-over { border-color: var(--tkm-primary); background: var(--tkm-primary-soft); }
 .tkm-ui .tkm-dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
 .tkm-ui .tkm-dropzone__icon { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--tkm-surface); color: var(--tkm-primary); box-shadow: var(--tkm-shadow-sm); flex: none; }
-.tkm-ui .tkm-dropzone__title { font-weight: 600; font-size: var(--tkm-fs-sm); }
-.tkm-ui .tkm-dropzone__hint { font-size: var(--tkm-fs-xs); color: var(--tkm-text-3); }
+.tkm-ui .tkm-dropzone__title { display: block; font-weight: 600; font-size: var(--tkm-fs-sm); }
+.tkm-ui .tkm-dropzone__hint { display: block; margin-top: 2px; font-size: var(--tkm-fs-xs); color: var(--tkm-text-3); line-height: 1.8; }
 
 .tkm-ui .tkm-filelist { display: flex; flex-wrap: wrap; gap: 8px; }
 .tkm-ui .tkm-filelist:empty { display: none; }

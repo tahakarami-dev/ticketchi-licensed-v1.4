@@ -2,6 +2,10 @@
 
 defined('ABSPATH') || exit('NO Access');
 
+/**
+ * Admin screens. Registered through the (ionCube-encoded) BASE_MENU so the
+ * marketplace licence check stays in charge of every page.
+ */
 class TKM_MENU extends BASE_MENU
 {
     public $tickets_list = NULL;
@@ -9,7 +13,6 @@ class TKM_MENU extends BASE_MENU
     private $wpdb;
     private $table;
     private $ticket_id = NULL;
-    private $reply_table;
 
     public function __construct()
     {
@@ -17,11 +20,12 @@ class TKM_MENU extends BASE_MENU
         $this->wpdb = $wpdb;
         $this->table = $wpdb->prefix . 'tkm_tickets';
         $this->ticket_id = isset($_GET['id']) ? absint($_GET['id']) : null;
-        $this->reply_table = $wpdb->prefix . 'tkm_replies';
         $this->page_title = 'تیکت چی';
         $this->menu_title = 'تیکت چی';
         $this->menu_slug = 'tkm-settings ';
         $this->icon = TKM_ADMIN_ASSETS . 'image/messages.png';
+        // Agents (role «کارشناس پشتیبانی» / department members) can open the workspace.
+        $this->capability = 'tkm_view';
         $this->has_sub_menu = true;
         $this->sub_item = [
 
@@ -32,64 +36,77 @@ class TKM_MENU extends BASE_MENU
                 'callback' => '',
                 'load' => [
                     'status' => false,
-
                 ]
-
             ],
             'analysis' => [
                 'page_title' => 'داشبورد',
-                'menu_title' => 'داشبورد و گزارش‌ها',
+                'menu_title' => 'داشبورد',
                 'menu_slug' => 'tkm-analysis',
                 'callback' => 'tkm_analysis',
                 'load' => [
                     'status' => false,
-
                 ]
             ],
-
             'ticket' => [
-                'page_title' => 'لیست تیکت ها',
-                'menu_title' => 'لیست تیکت ها',
+                'page_title' => 'صندوق پشتیبانی',
+                'menu_title' => 'صندوق پشتیبانی',
                 'menu_slug' => 'tkm-tickets',
                 'callback' => 'tickets_page',
-                'load' => [
-                    'status' => true,
-                    'callback_option' => 'tickets_screen_option',
-                ]
-
-            ],
-            'departments' => [
-                'page_title' => 'لیست دپارتمان ها',
-                'menu_title' => 'لیست دپارتمان ها ',
-                'menu_slug' => 'tkm-departments',
-                'callback' => 'departments_page',
-                'load' => [
-                    'status' => false,
-                ]
-            ],
-            'my_departments' => [
-                'page_title' => ' تیکت های دپارتمان من  ',
-                'menu_title' => ' تیکت های دپارتمان من  ',
-                'menu_slug' => 'tkm-my-departments',
-                'callback' => 'departments_page',
                 'load' => [
                     'status' => false,
                 ]
             ],
             'new-ticket' => [
-                'page_title' => '  ارسال تیکت',
-                'menu_title' => '  ارسال تیکت',
+                'page_title' => 'ارسال تیکت',
+                'menu_title' => 'ارسال تیکت',
                 'menu_slug' => 'tkm-new-ticket',
                 'callback' => 'new_ticket_page',
                 'load' => [
                     'status' => false,
                 ],
             ],
+            'reports' => [
+                'page_title' => 'گزارش‌ها',
+                'menu_title' => 'گزارش‌ها',
+                'menu_slug' => 'tkm-reports',
+                'callback' => 'reports_page',
+                'load' => [
+                    'status' => false,
+                ],
+            ],
+            'automations' => [
+                'page_title' => 'اتوماسیون',
+                'menu_title' => 'اتوماسیون',
+                'menu_slug' => 'tkm-automations',
+                'callback' => 'automations_page',
+                'load' => [
+                    'status' => false,
+                ],
+            ],
+            'departments' => [
+                'page_title' => 'تیم و دپارتمان‌ها',
+                'menu_title' => 'تیم و دپارتمان‌ها',
+                'menu_slug' => 'tkm-departments',
+                'callback' => 'departments_page',
+                'load' => [
+                    'status' => false,
+                ]
+            ],
+            // Kept so old links keep working; both redirect into the inbox.
+            'my_departments' => [
+                'page_title' => 'صف من',
+                'menu_title' => 'صف من',
+                'menu_slug' => 'tkm-my-departments',
+                'callback' => 'tickets_page',
+                'load' => [
+                    'status' => false,
+                ]
+            ],
             'edit-ticket' => [
-                'page_title' => '  ویرایش تیکت',
-                'menu_title' => '  ویرایش تیکت',
+                'page_title' => 'تیکت',
+                'menu_title' => 'تیکت',
                 'menu_slug' => 'tkm-edit-ticket',
-                'callback' => 'edit_ticket_page',
+                'callback' => 'tickets_page',
                 'load' => [
                     'status' => false,
                 ],
@@ -97,11 +114,16 @@ class TKM_MENU extends BASE_MENU
         ];
         parent::__construct();
 
-        // Forms are processed before any output so we can redirect (Post/Redirect/Get).
+        // Compose form is processed before output so it can redirect (Post/Redirect/Get).
         add_action('admin_init', [$this, 'handle_post']);
         add_action('admin_init', ['TKM_Admin_Department_Manager', 'boot']);
-        add_filter('set-screen-option', [$this, 'save_screen_option'], 10, 3);
-        add_filter('set_screen_option_ticket_per_page', [$this, 'save_screen_option'], 10, 3);
+        add_action('admin_head', [$this, 'hide_redirect_pages']);
+    }
+
+    /** The two legacy entries stay registered (old links) but out of the sidebar. */
+    public function hide_redirect_pages()
+    {
+        echo '<style>#adminmenu a[href*="page=tkm-edit-ticket"],#adminmenu a[href*="page=tkm-my-departments"]{display:none!important}</style>';
     }
 
     public function page()
@@ -115,10 +137,7 @@ class TKM_MENU extends BASE_MENU
 
     public function tickets_page()
     {
-        if (!$this->tickets_list) {
-            $this->tickets_list = new TKM_Ticket_List();
-        }
-        include TKM_VIEWS_PATH . 'admin/ticket/main.php';
+        include TKM_VIEWS_PATH . 'admin/inbox/app.php';
     }
 
     public function tkm_analysis()
@@ -126,23 +145,29 @@ class TKM_MENU extends BASE_MENU
         include TKM_VIEWS_PATH . 'admin/analysis/analysis.php';
     }
 
-    public function tickets_screen_option()
+    private function tkm_render_denied()
     {
-        // add screen option
-        $args = [
-            'label' => 'تعداد تیکت در هر صفحه :',
-            'default' => 20,
-            'option' => 'ticket_per_page',
-        ];
-        add_screen_option('per_page', $args);
-
-        $this->tickets_list = new TKM_Ticket_List();
-        $this->tickets_list->process_actions();
+        include TKM_VIEWS_PATH . 'admin/partials/header.php';
+        \Ticketchi\Admin\Screens::deny();
+        include TKM_VIEWS_PATH . 'admin/partials/footer.php';
     }
 
-    public function save_screen_option($status, $option, $value)
+    public function reports_page()
     {
-        return $option === 'ticket_per_page' ? max(1, min(200, (int) $value)) : $status;
+        if (!current_user_can('tkm_manage')) {
+            $this->tkm_render_denied();
+            return;
+        }
+        include TKM_VIEWS_PATH . 'admin/reports/app.php';
+    }
+
+    public function automations_page()
+    {
+        if (!current_user_can('tkm_manage')) {
+            $this->tkm_render_denied();
+            return;
+        }
+        include TKM_VIEWS_PATH . 'admin/automations/app.php';
     }
 
     public function departments_page()
@@ -151,7 +176,7 @@ class TKM_MENU extends BASE_MENU
         $manager->page();
     }
 
-    /* ───────────────────────── POST handling ───────────────────────── */
+    /* ───────────────────────── Compose (staff → customers) ───────────────────────── */
 
     public function handle_post()
     {
@@ -159,8 +184,7 @@ class TKM_MENU extends BASE_MENU
             return;
         }
 
-        $page = sanitize_key(wp_unslash($_GET['page']));
-        if (!in_array($page, ['tkm-new-ticket', 'tkm-edit-ticket'], true)) {
+        if (sanitize_key(wp_unslash($_GET['page'])) !== 'tkm-new-ticket') {
             return;
         }
 
@@ -168,27 +192,16 @@ class TKM_MENU extends BASE_MENU
             wp_die('نشست شما منقضی شده است. صفحه را دوباره بارگذاری کنید.', '', ['back_link' => true]);
         }
 
-        if (!tkm_is_staff()) {
+        if (!current_user_can('tkm_view')) {
             wp_die('شما اجازه انجام این کار را ندارید.', '', ['response' => 403]);
         }
 
-        if ($page === 'tkm-new-ticket') {
-            $ids = $this->create_ticket(get_current_user_id(), wp_unslash($_POST));
-            if ($ids) {
-                $this->redirect(count($ids) === 1 ? tkm_admin_url('tkm-edit-ticket', ['id' => $ids[0]]) : tkm_admin_url('tkm-tickets'));
-            }
-            // Validation failed: keep the submitted values on the page (no redirect).
-            return;
+        $ids = $this->create_ticket(get_current_user_id(), wp_unslash($_POST));
+        if ($ids) {
+            wp_safe_redirect(count($ids) === 1 ? \Ticketchi\Support\Links::admin_ticket($ids[0]) : tkm_admin_url('tkm-tickets'));
+            exit;
         }
-
-        $this->process_edit();
-        $this->redirect(tkm_admin_url('tkm-edit-ticket', ['id' => $this->ticket_id]));
-    }
-
-    private function redirect($url)
-    {
-        wp_safe_redirect($url);
-        exit;
+        // Validation failed: keep the submitted values on the page (no redirect).
     }
 
     public function new_ticket_page()
@@ -198,11 +211,13 @@ class TKM_MENU extends BASE_MENU
     }
 
     /**
+     * One ticket per recipient.
+     *
      * @return int[] Inserted ticket ids (empty on validation error).
      */
     public function create_ticket($creator_id, $data)
     {
-        $users = !empty($data['user-id']) && is_array($data['user-id']) ? array_filter(array_map('absint', $data['user-id'])) : [];
+        $users = !empty($data['user-id']) && is_array($data['user-id']) ? array_unique(array_filter(array_map('absint', $data['user-id']))) : [];
         $title = isset($data['ticket-title']) ? sanitize_text_field($data['ticket-title']) : '';
         $body = isset($data['tkm-content']) ? wp_kses_post($data['tkm-content']) : '';
         $department_id = isset($data['department_id']) ? absint($data['department_id']) : 0;
@@ -213,36 +228,26 @@ class TKM_MENU extends BASE_MENU
         }
 
         $file_value = $this->collect_files(null, 'tkm_ticket_files');
-        $statuses = wp_list_pluck(tkm_get_status(), 'slug');
-        $status = isset($data['status']) && in_array($data['status'], $statuses, true) ? $data['status'] : 'open';
-        $priority = isset($data['priority']) && in_array($data['priority'], ['low', 'medium', 'high'], true) ? $data['priority'] : 'medium';
-        $now = date('Y-m-d H:i:s');
         $ticket_ids = [];
 
-        foreach (array_unique($users) as $user_id) {
-            $inserted = $this->wpdb->insert(
-                $this->table,
-                [
-                    'title' => $title,
-                    'body' => $body,
-                    'status' => $status,
-                    'priority' => $priority,
-                    'creator_id' => $creator_id,
-                    'user_id' => $user_id,
-                    'from_admin' => 1,
-                    'department_id' => $department_id,
-                    'file' => $file_value,
-                    'note' => !empty($data['note']) ? sanitize_text_field($data['note']) : null,
-                    'create_date' => $now,
-                    'reply_date' => $now,
-                ],
-                ['%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s']
-            );
+        foreach ($users as $user_id) {
+            $id = \Ticketchi\Domain\Tickets::create([
+                'title'         => $title,
+                'body'          => $body,
+                'status'        => isset($data['status']) ? $data['status'] : 'open',
+                'priority'      => isset($data['priority']) ? $data['priority'] : 'medium',
+                'creator_id'    => $creator_id,
+                'user_id'       => $user_id,
+                'from_admin'    => 1,
+                'department_id' => $department_id,
+                'file'          => $file_value,
+                'note'          => isset($data['note']) ? $data['note'] : '',
+            ], $creator_id, 'staff');
 
-            if ($inserted) {
-                $ticket_ids[] = (int) $this->wpdb->insert_id;
+            if (!is_wp_error($id)) {
+                $ticket_ids[] = $id;
                 if (isset($data['send-copy'])) {
-                    do_action('tkm_submit_ticket', $this->wpdb->insert_id);
+                    do_action('tkm_submit_ticket', $id);
                 }
             }
         }
@@ -262,104 +267,8 @@ class TKM_MENU extends BASE_MENU
     }
 
     /**
-     * Saves ticket properties, edits/deletes existing replies and adds a new reply.
-     */
-    private function process_edit()
-    {
-        $ticket = $this->get_ticket();
-        if (!$ticket) {
-            tkm_flash('تیکت مورد نظر یافت نشد.', 'danger');
-            return;
-        }
-
-        $data = wp_unslash($_POST);
-        $reply_manager = new TKM_Reply_Manager($this->ticket_id);
-
-        foreach ($reply_manager->get_replys() as $reply) {
-            $key = 'tkm-reply-body-' . $reply->ID;
-            if (!isset($data[$key])) {
-                continue;
-            }
-
-            if (trim($data[$key]) !== '') {
-                $this->update_reply([
-                    'ID' => $reply->ID,
-                    'body' => wp_kses_post($data[$key]),
-                    'file' => $this->collect_files($reply->file, 'tkm_reply_files_' . $reply->ID, 'remove_reply_file_' . $reply->ID),
-                ]);
-            } elseif ($reply_manager->delete_reply($reply->ID)) {
-                tkm_flash('پیام با موفقیت حذف شد.', 'info');
-            }
-        }
-
-        $this->update_ticket($data);
-
-        if (!empty($data['reply_content']) && trim(wp_strip_all_tags($data['reply_content'], true)) !== '') {
-            $insert_reply = $this->create_reply([
-                'ticket_id' => $this->ticket_id,
-                'creator_id' => get_current_user_id(),
-                'from_admin' => 1,
-                'body' => wp_kses_post($data['reply_content']),
-                'file' => $this->collect_files(null, 'tkm_reply_files'),
-            ]);
-
-            if ($insert_reply) {
-                $this->update_reply_date();
-                // After a staff reply the ticket becomes «answered» unless it was explicitly closed/finished.
-                $status = isset($data['status']) ? sanitize_key($data['status']) : '';
-                if (!in_array($status, ['closed', 'finish'], true)) {
-                    $this->update_status('answerd');
-                }
-            }
-        }
-    }
-
-    public function edit_ticket_page()
-    {
-        $is_edit = true;
-        $ticket = $this->get_ticket();
-        $replies = $ticket ? (new TKM_Reply_Manager($ticket->ID))->get_replys() : [];
-
-        include TKM_VIEWS_PATH . 'admin/ticket/new.php';
-    }
-
-    public function create_reply($data)
-    {
-        $insert = $this->wpdb->insert(
-            $this->reply_table,
-            array_merge($data, ['create_date' => date('Y-m-d H:i:s')]),
-            ['%d', '%d', '%d', '%s', '%s', '%s']
-        );
-
-        if ($insert) {
-            tkm_flash('پاسخ با موفقیت ارسال شد.');
-        } else {
-            tkm_flash('ارسال پاسخ با خطا مواجه شد.', 'danger');
-        }
-
-        return $insert ? $this->wpdb->insert_id : null;
-    }
-
-    public function update_reply_date()
-    {
-        return $this->wpdb->update($this->table, ['reply_date' => date('Y-m-d H:i:s')], ['ID' => (int) $this->ticket_id], ['%s'], ['%d']);
-    }
-
-    public function update_status($status)
-    {
-        return $this->wpdb->update(
-            $this->table,
-            ['status' => $status],
-            ['ID' => intval($this->ticket_id)],
-            ['%s'],
-            ['%d']
-        );
-    }
-
-    /**
-     * جمع‌آوری فایل‌های نهایی برای ذخیره:
-     * فایل‌های موجود (منهای حذف‌شده‌ها) + فایل‌های تازه آپلودشده.
-     * خروجی: مقدار JSON قابل ذخیره در ستون file یا null.
+     * Existing files (minus removed ones) + newly uploaded ones, as the JSON
+     * value stored in the «file» column (or null).
      */
     private function collect_files($current_value, $files_key, $remove_key = null)
     {
@@ -386,94 +295,5 @@ class TKM_MENU extends BASE_MENU
         }
 
         return tkm_files_encode($files);
-    }
-
-    public function update_ticket($data)
-    {
-        $title = isset($data['ticket-title']) ? sanitize_text_field($data['ticket-title']) : '';
-        $body = isset($data['tkm-content']) ? wp_kses_post($data['tkm-content']) : '';
-        $department_id = isset($data['department_id']) ? absint($data['department_id']) : 0;
-
-        if ($title === '' || trim(wp_strip_all_tags($body)) === '' || !$department_id) {
-            tkm_flash('ذخیره تیکت انجام نشد؛ عنوان، متن و دپارتمان الزامی هستند.', 'danger');
-            return false;
-        }
-
-        $current_ticket = $this->get_ticket();
-        $statuses = wp_list_pluck(tkm_get_status(), 'slug');
-
-        $fields = [
-            'title' => $title,
-            'body' => $body,
-            'department_id' => $department_id,
-            'file' => $this->collect_files($current_ticket ? $current_ticket->file : null, 'tkm_ticket_files', 'remove_ticket_file'),
-            'note' => isset($data['note']) ? sanitize_textarea_field($data['note']) : null,
-        ];
-        $formats = ['%s', '%s', '%d', '%s', '%s'];
-
-        if (isset($data['status']) && in_array($data['status'], $statuses, true)) {
-            $fields['status'] = $data['status'];
-            $formats[] = '%s';
-        }
-        if (isset($data['priority']) && in_array($data['priority'], ['low', 'medium', 'high'], true)) {
-            $fields['priority'] = $data['priority'];
-            $formats[] = '%s';
-        }
-
-        // creator / recipient are optional: customer tickets have no recipient.
-        $creator_id = !empty($data['creator-id']) ? absint(is_array($data['creator-id']) ? reset($data['creator-id']) : $data['creator-id']) : 0;
-        if ($creator_id) {
-            $fields['creator_id'] = $creator_id;
-            $formats[] = '%d';
-        }
-        $user_id = !empty($data['user-id']) ? absint(is_array($data['user-id']) ? reset($data['user-id']) : $data['user-id']) : 0;
-        if ($user_id) {
-            $fields['user_id'] = $user_id;
-            $formats[] = '%d';
-        }
-
-        // <input type="datetime-local"> sends site-local time; the column stores UTC (PHP date()).
-        if (!empty($data['date_ticket'])) {
-            $local = date_create_immutable_from_format('Y-m-d\TH:i', $data['date_ticket'], wp_timezone());
-            if ($local) {
-                $fields['create_date'] = $local->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
-                $formats[] = '%s';
-            }
-        }
-
-        $updated = $this->wpdb->update($this->table, $fields, ['ID' => intval($this->ticket_id)], $formats, ['%d']);
-
-        if ($updated === false) {
-            tkm_flash('مشکلی در ذخیره تیکت رخ داد.', 'danger');
-            return false;
-        }
-
-        if ($updated) {
-            tkm_flash('تغییرات تیکت ذخیره شد.');
-        }
-
-        return true;
-    }
-
-    public function get_ticket()
-    {
-        if (!intval($this->ticket_id)) {
-            return null;
-        }
-        return  $this->wpdb->get_row($this->wpdb->prepare("SELECT * FROM " . $this->table . " WHERE ID = %d", $this->ticket_id));
-    }
-
-    public function update_reply($data)
-    {
-        return $this->wpdb->update(
-            $this->reply_table,
-            [
-                'body' => $data['body'],
-                'file' => $data['file']
-            ],
-            ['ID' => $data['ID']],
-            ['%s', '%s'],
-            ['%d']
-        );
     }
 }

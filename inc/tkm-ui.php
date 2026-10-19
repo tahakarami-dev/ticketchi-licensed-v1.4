@@ -72,6 +72,10 @@ function tkm_icon($name, $size = 18, $class = '')
         'trending-up'   => '<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
         'grid'          => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
         'list'          => '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+        'bell'          => '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+        'user-check'    => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>',
+        'shopping-bag'  => '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+        'book'          => '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
         'reply'         => '<path d="m9 17-5-5 5-5"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/>',
     ];
 
@@ -131,26 +135,8 @@ function tkm_admin_url($page, $args = [])
  */
 function tkm_is_staff($user_id = null)
 {
-    static $cache = [];
-
     $user_id = $user_id ? (int) $user_id : get_current_user_id();
-    if (!$user_id) {
-        return false;
-    }
-
-    if (isset($cache[$user_id])) {
-        return $cache[$user_id];
-    }
-
-    if (user_can($user_id, 'manage_options') || user_can($user_id, 'manage_woocommerce')) {
-        return $cache[$user_id] = true;
-    }
-
-    global $wpdb;
-    return $cache[$user_id] = (bool) $wpdb->get_var($wpdb->prepare(
-        "SELECT ID FROM {$wpdb->prefix}tkm_users WHERE user_id = %d LIMIT 1",
-        $user_id
-    ));
+    return $user_id ? user_can($user_id, 'tkm_view') : false;
 }
 
 /**

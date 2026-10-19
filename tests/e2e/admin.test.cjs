@@ -39,35 +39,163 @@ async function fillEditor(page, id, text) {
   await shot(page, 'admin-tickets-dark');
   await page.click('[data-theme-toggle]');
 
-  console.log('\nTickets list');
-  await page.goto(A('tkm-tickets'));
+  console.log('\nInbox');
+  const api = (path, opts = {}) => page.evaluate(async ([path, opts]) => {
+    const res = await fetch(TKM_APP.root + path, { method: opts.method || 'GET', headers: { 'X-WP-Nonce': TKM_APP.nonce, 'Content-Type': 'application/json' }, body: opts.body ? JSON.stringify(opts.body) : undefined });
+    return { status: res.status, data: await res.json().catch(() => null) };
+  }, [path, opts]);
+  await page.goto(A('tkm-tickets') + '#/view/all');
+  await page.waitForSelector('.tkm-ib-item[data-id]');
   const total = Number(rows("SELECT COUNT(*) AS c FROM {p}tkm_tickets WHERE status != 'trash'")[0].c);
-  ok((await page.locator('.wp-list-table tbody tr').count()) === Math.min(20, total), 'list shows first page of tickets', `${total}`);
-  await page.fill('input[name="search"]', "x' OR 1=1 -- ");
-  await Promise.all([page.waitForNavigation(), page.click('.tkm-filters button[type="submit"]')]);
-  ok(await page.locator('.tkm-empty').isVisible(), 'search input is escaped (no SQL injection, empty result)');
-  await page.goto(A('tkm-tickets', '&search=%23' + rows("SELECT ID FROM {p}tkm_tickets ORDER BY ID LIMIT 1")[0].ID));
-  ok((await page.locator('.wp-list-table tbody tr').count()) === 1, 'search by #id finds the ticket');
-  await page.goto(A('tkm-tickets', '&status=open'));
-  const openRows = await page.locator('.wp-list-table tbody tr .tkm-badge').evaluateAll((els) => els.map((e) => e.dataset.status));
-  ok(openRows.length > 0 && openRows.every((s) => s === 'open'), 'status tab filters');
-  await page.goto(A('tkm-tickets', '&orderby=priority&order=desc'));
-  ok(await page.locator('.wp-list-table tbody tr').first().locator('.tkm-priority--high').count() === 1, 'sort by priority works');
+  ok((await page.locator('.tkm-ib-item[data-id]').count()) === Math.min(30, total), 'inbox lists all tickets in «همه»', `${total}`);
+  const firstTicket = rows("SELECT ID FROM {p}tkm_tickets ORDER BY ID LIMIT 1")[0].ID;
+  await page.fill('[data-search]', '#' + firstTicket);
+  await page.waitForFunction((id) => { const n = document.querySelectorAll('.tkm-ib-item[data-id]'); return n.length === 1 && n[0].dataset.id == id; }, firstTicket, { timeout: 8000 }).catch(() => {});
+  ok((await page.locator('.tkm-ib-item[data-id]').count()) === 1, 'search by #id finds the ticket');
+  await page.fill('[data-search]', "x' OR 1=1 -- ");
+  await page.waitForSelector('.tkm-ib-empty', { timeout: 8000 }).catch(() => {});
+  ok(await page.locator('.tkm-ib-empty').isVisible(), 'search input is escaped (no SQL injection, empty result)');
+  await page.fill('[data-search]', '');
+  await page.waitForTimeout(600);
 
-  // trash via row action, then restore via bulk action
-  await page.goto(A('tkm-tickets'));
-  const firstId = await page.locator('.wp-list-table tbody input[name="id[]"]').first().getAttribute('value');
-  await page.locator('.wp-list-table tbody tr').first().hover();
-  await Promise.all([page.waitForNavigation(), page.locator('.wp-list-table tbody tr').first().locator('.row-actions .trash a').click()]);
-  ok(page.url().indexOf('action=trash') === -1, 'trash action redirects (PRG)');
-  ok(await page.locator('.tkm-flash').isVisible(), 'flash message shown after trash');
-  ok(rows(`SELECT status FROM {p}tkm_tickets WHERE ID = ${firstId}`)[0].status === 'trash', 'ticket moved to trash');
-  await page.goto(A('tkm-tickets', '&status=trash'));
-  await page.check(`.wp-list-table input[name="id[]"][value="${firstId}"]`);
-  await page.selectOption('#bulk-action-selector-top', 'bulk-open');
-  await Promise.all([page.waitForNavigation(), page.click('#doaction')]);
-  ok(rows(`SELECT status FROM {p}tkm_tickets WHERE ID = ${firstId}`)[0].status === 'open', 'bulk status change restores ticket');
-  await shot(page, 'admin-tickets');
+  await page.click('[data-view="waiting"]');
+  await page.waitForTimeout(800);
+  const waiting = Number(rows("SELECT COUNT(*) AS c FROM {p}tkm_tickets WHERE status = 'answerd'")[0].c);
+  ok((await page.locator('.tkm-ib-item[data-id]').count()) === waiting, 'view «منتظر مشتری» filters by status', `${waiting}`);
+
+  // conversation: reply, internal note, properties
+  const ticket = rows("SELECT t.* FROM {p}tkm_tickets t WHERE EXISTS (SELECT 1 FROM {p}tkm_replies r WHERE r.ticket_id = t.ID) AND t.status NOT IN ('trash','closed','finish') ORDER BY t.ID LIMIT 1")[0];
+  await page.goto(A('tkm-tickets') + '#/ticket/' + ticket.ID);
+  await page.waitForSelector('[data-composer]');
+  const replyCount = Number(rows(`SELECT COUNT(*) AS c FROM {p}tkm_replies WHERE ticket_id = ${ticket.ID}`)[0].c);
+  ok((await page.locator('.tkm-ib-msg').count()) === replyCount + 1, 'deep link opens the conversation (opening message + replies)');
+  await page.click('[data-send]:not([data-send="close"])');
+  ok(await page.locator('.tkm-toast--error').isVisible(), 'empty reply blocked');
+  await page.click('[data-canned-toggle]');
+  await page.click('[data-canned="1"]');
+  ok((await page.inputValue('[data-composer-input]')).length > 5, 'canned response inserted');
+  await page.fill('[data-composer-input]', 'پاسخ کارشناس ' + stamp);
+  await page.setInputFiles('[data-composer-file]', { name: 'fix.txt', mimeType: 'text/plain', buffer: Buffer.from('patch') });
+  await page.keyboard.press('Control+Enter');
+  await page.waitForSelector(`.tkm-ib-msg :text("پاسخ کارشناس ${stamp}")`, { timeout: 8000 }).catch(() => {});
+  let t = rows(`SELECT * FROM {p}tkm_tickets WHERE ID = ${ticket.ID}`)[0];
+  const lastReply = rows(`SELECT * FROM {p}tkm_replies WHERE ticket_id = ${ticket.ID} ORDER BY ID DESC LIMIT 1`)[0];
+  ok(lastReply.body.includes('پاسخ کارشناس ' + stamp) && lastReply.from_admin == 1 && lastReply.is_internal == 0, 'staff reply stored (Ctrl+Enter)');
+  ok(/fix(-\d+)?\.txt/.test(lastReply.file || ''), 'reply attachment uploaded');
+  ok(t.status === 'answerd' && t.first_response_at, 'status → answered and first response stamped', t.status);
+
+  await page.keyboard.press('n');
+  await page.fill('[data-composer-input]', 'یادداشت داخلی ' + stamp);
+  await page.click('[data-send]');
+  await page.waitForSelector('.tkm-ib-msg--note', { timeout: 8000 }).catch(() => {});
+  const note = rows(`SELECT * FROM {p}tkm_replies WHERE ticket_id = ${ticket.ID} ORDER BY ID DESC LIMIT 1`)[0];
+  ok(note.is_internal == 1 && rows(`SELECT status FROM {p}tkm_tickets WHERE ID = ${ticket.ID}`)[0].status === 'answerd', 'internal note stored without changing status');
+
+  await page.click('[data-priority="high"]');
+  await page.waitForTimeout(700);
+  await page.selectOption('[data-prop="assignee_id"]', '1');
+  await page.waitForTimeout(700);
+  await page.fill('[data-tag-input]', 'تست ' + stamp);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(900);
+  await page.fill('[data-pinned-note]', 'یادداشت ثابت ' + stamp);
+  await page.locator('[data-pinned-note]').blur();
+  await page.waitForTimeout(900);
+  t = rows(`SELECT * FROM {p}tkm_tickets WHERE ID = ${ticket.ID}`)[0];
+  ok(t.priority === 'high' && t.assignee_id == 1 && t.note === 'یادداشت ثابت ' + stamp, 'priority, assignee and pinned note saved', JSON.stringify([t.priority, t.assignee_id, t.note]));
+  ok(rows(`SELECT COUNT(*) AS c FROM {p}tkm_ticket_tags tt JOIN {p}tkm_tags g ON g.ID = tt.tag_id WHERE tt.ticket_id = ${ticket.ID} AND g.name = 'تست ${stamp}'`)[0].c == 1, 'new tag created and attached');
+  await page.click('[data-side-tab="activity"]');
+  ok((await page.locator('.tkm-ib-timeline__item').count()) >= 4, 'activity timeline records the changes');
+  await page.click('[data-side-tab="customer"]');
+  ok(await page.locator('.tkm-ib-customer').isVisible(), 'customer 360 card renders');
+  await shot(page, 'admin-inbox');
+
+  await page.click('[data-send="close"]').catch(() => {});
+  await page.keyboard.press('r');
+  await page.fill('[data-composer-input]', 'حل شد');
+  await page.click('[data-send="close"]');
+  await page.waitForTimeout(1200);
+  ok(['closed'].includes(rows(`SELECT status FROM {p}tkm_tickets WHERE ID = ${ticket.ID}`)[0].status), '"send & close" closes the ticket');
+
+  // bulk: trash then restore
+  await page.goto(A('tkm-tickets') + '#/view/all');
+  await page.waitForSelector('.tkm-ib-item[data-id]');
+  const bulkId = await page.locator('.tkm-ib-item[data-id]').first().getAttribute('data-id');
+  await page.locator('.tkm-ib-item[data-id]').first().hover();
+  await page.check(`[data-select="${bulkId}"]`);
+  ok(await page.locator('[data-bulk]').isVisible(), 'bulk bar appears on selection');
+  await page.click('[data-bulk-action="trash"]');
+  await page.waitForTimeout(1000);
+  ok(rows(`SELECT status FROM {p}tkm_tickets WHERE ID = ${bulkId}`)[0].status === 'trash', 'bulk trash');
+  const restore = await api('tickets/bulk', { method: 'POST', body: { ids: [Number(bulkId)], action: 'restore' } });
+  ok(restore.status === 200 && rows(`SELECT status FROM {p}tkm_tickets WHERE ID = ${bulkId}`)[0].status === 'open', 'bulk restore via REST');
+
+  // command palette
+  await page.keyboard.press('Control+k');
+  ok(await page.locator('.tkm-cmdk:not([hidden])').isVisible(), 'Ctrl+K opens the command palette (not wp-admin\'s)');
+  ok(await page.locator('.commands-command-menu').count() === 0, 'core command menu does not open on top');
+  await page.keyboard.type(String(firstTicket));
+  await page.waitForSelector('.tkm-cmdk__item[href*="#/ticket/"]', { timeout: 8000 }).catch(() => {});
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(800);
+  ok(page.url().includes('#/ticket/'), 'palette jumps to a ticket');
+
+  // legacy deep links
+  await page.goto(A('tkm-edit-ticket', '&id=' + ticket.ID));
+  ok(page.url().includes('page=tkm-tickets') && page.url().includes('#/ticket/' + ticket.ID), 'old edit-ticket links redirect into the inbox');
+  await page.goto(A('tkm-my-departments'));
+  ok(page.url().includes('#/view/mine'), 'old «my departments» link redirects to «my tickets»');
+
+  console.log('\nREST API');
+  const meta = await api('meta');
+  ok(meta.status === 200 && meta.data.me.manage === true && meta.data.statuses.length >= 4, '/meta returns context for the app');
+  const bad = await api('tickets/999999');
+  ok(bad.status === 404, 'unknown ticket → 404');
+  const badPatch = await api('tickets/' + ticket.ID, { method: 'PATCH', body: { priority: 'urgent!!' } });
+  ok(badPatch.status === 200 && rows(`SELECT priority FROM {p}tkm_tickets WHERE ID = ${ticket.ID}`)[0].priority === 'high', 'invalid priority ignored');
+  const noNonce = await page.evaluate(async () => (await fetch(TKM_APP.root + 'inbox', { credentials: 'same-origin' })).status);
+  ok(noNonce === 401 || noNonce === 403, 'REST requires the nonce', String(noNonce));
+
+  console.log('\nAutomations');
+  await page.goto(A('tkm-automations'));
+  await page.waitForSelector('#tkm-automations[data-state="ready"]');
+  const before = await page.locator('.tkm-rule').count();
+  await page.click('[data-new-rule]');
+  await page.fill('[name="name"]', 'قانون ' + stamp);
+  await page.selectOption('[name="trigger"]', 'ticket_created');
+  await page.click('[data-add-condition]');
+  await page.locator('[data-row="condition"]').last().locator('[data-cond-field]').selectOption('keyword');
+  await page.locator('[data-row="condition"]').last().locator('[data-value]').fill('زمان‌بندی' + stamp);
+  await page.locator('[data-row="action"]').first().locator('[data-action-type]').selectOption('priority');
+  await page.locator('[data-row="action"]').first().locator('[data-value]').selectOption('high');
+  await page.click('[data-add-action]');
+  await page.locator('[data-row="action"]').last().locator('[data-action-type]').selectOption('note');
+  await page.locator('[data-row="action"]').last().locator('[data-value]').fill('یادداشت خودکار');
+  await page.click('[data-rule-form] [type="submit"]');
+  await page.waitForTimeout(1200);
+  ok((await page.locator('.tkm-rule').count()) === before + 1, 'rule saved from the builder');
+  await shot(page, 'admin-automations');
+  // the rule fires on a real ticket
+  const autoId = Number(wp(`echo \\Ticketchi\\Domain\\Tickets::create(['title' => 'زمان‌بندی${stamp}', 'body' => 'تست', 'creator_id' => 2, 'department_id' => (int) $GLOBALS['wpdb']->get_var("SELECT ID FROM {$GLOBALS['wpdb']->prefix}tkm_departments WHERE parent > 0 LIMIT 1"), 'priority' => 'low'], 2, 'customer');`));
+  const auto = rows(`SELECT priority FROM {p}tkm_tickets WHERE ID = ${autoId}`)[0];
+  ok(auto && auto.priority === 'high', 'automation changed the priority of a matching ticket', JSON.stringify(auto));
+  ok(rows(`SELECT COUNT(*) AS c FROM {p}tkm_replies WHERE ticket_id = ${autoId} AND is_internal = 1`)[0].c == 1, 'automation added an internal note');
+
+  console.log('\nReports');
+  await page.goto(A('tkm-reports'));
+  await page.waitForSelector('#tkm-reports[data-state="ready"]');
+  ok((await page.locator('.tkm-rp-kpis .tkm-kpi').count()) === 8, '8 KPI tiles');
+  ok(await page.locator('.tkm-rp-trend svg path.tkm-rp-line').count() === 2, 'trend chart has 2 series');
+  ok((await page.locator('.tkm-heat__cell').count()) === 7 * 24, '7×24 heatmap');
+  const hit = await page.locator('[data-hit]').boundingBox();
+  await page.mouse.move(hit.x + hit.width / 2, hit.y + 40);
+  ok(await page.locator('[data-tip]').isVisible(), 'trend crosshair tooltip');
+  await page.click('[data-days="7"]');
+  await page.waitForSelector('#tkm-reports[data-state="ready"]');
+  ok((await page.locator('.tkm-mini-table tbody tr').count()) === 7, '7-day range re-renders');
+  const csv = await page.request.get(await page.getAttribute('[data-csv]', 'href'));
+  ok(csv.status() === 200 && (await csv.text()).includes('شناسه'), 'CSV export downloads');
+  await shot(page, 'admin-reports');
 
   console.log('\nCompose');
   await page.goto(A('tkm-new-ticket'));
@@ -91,54 +219,6 @@ async function fillEditor(page, id, text) {
   ok(sent.length === 2 && sent.every((t) => t.from_admin == 1 && t.priority === 'high'), 'one ticket per recipient, from_admin=1, priority=high');
   ok(await page.locator('.tkm-flash').isVisible(), 'flash after sending');
 
-  console.log('\nWorkspace');
-  const ticket = rows("SELECT t.* FROM {p}tkm_tickets t WHERE EXISTS (SELECT 1 FROM {p}tkm_replies r WHERE r.ticket_id = t.ID) AND t.status != 'trash' ORDER BY t.ID LIMIT 1")[0];
-  await page.goto(A('tkm-edit-ticket', '&id=' + ticket.ID));
-  ok(await page.locator('.tkm-ws').isVisible(), 'workspace renders');
-  const replyCount = rows(`SELECT COUNT(*) AS c FROM {p}tkm_replies WHERE ticket_id = ${ticket.ID}`)[0].c;
-  ok((await page.locator('.tkm-thread [data-msg]').count()) === Number(replyCount) + 1, 'thread shows opening message + replies');
-
-  await page.click('[data-reply-send]');
-  ok(await page.locator('.tkm-toast--error').isVisible(), 'empty reply blocked');
-  await page.selectOption('#save_select', { index: 1 });
-  const canned = await page.evaluate(() => tinymce.get('reply_content').getContent({ format: 'text' }));
-  ok(canned.length > 5, 'canned response inserted into editor');
-  await fillEditor(page, 'reply_content', 'پاسخ کارشناس ' + stamp);
-  await page.locator('.tkm-segmented--full label', { has: page.locator('input[value="high"]') }).click();
-  await page.fill('#note-ticket', 'یادداشت ' + stamp);
-  await page.setInputFiles('#tkm_reply_files', { name: 'fix.txt', mimeType: 'text/plain', buffer: Buffer.from('patch') });
-  await Promise.all([page.waitForNavigation(), page.click('[data-reply-send]')]);
-  let t = rows(`SELECT * FROM {p}tkm_tickets WHERE ID = ${ticket.ID}`)[0];
-  const lastReply = rows(`SELECT * FROM {p}tkm_replies WHERE ticket_id = ${ticket.ID} ORDER BY ID DESC LIMIT 1`)[0];
-  ok(lastReply.body.includes('پاسخ کارشناس ' + stamp) && lastReply.from_admin == 1, 'staff reply stored with from_admin=1');
-  ok(/fix(-\d+)?\.txt/.test(lastReply.file || ''), 'reply attachment uploaded');
-  ok(t.status === 'answerd', 'status auto-set to answered after reply', t.status);
-  ok(t.priority === 'high' && t.note === 'یادداشت ' + stamp, 'priority + note saved');
-  ok(page.url().includes('tkm-edit-ticket') && await page.locator('.tkm-flash').count() > 0, 'redirected back with flash (PRG)');
-  await shot(page, 'admin-workspace');
-
-  // edit an existing reply
-  const editId = lastReply.ID;
-  await page.locator(`#reply-${editId} [data-toggle-edit]`).click();
-  await page.fill(`#tkm-reply-body-${editId}`, 'ویرایش‌شده ' + stamp);
-  await Promise.all([page.waitForNavigation(), page.locator('.tkm-head [data-save]').click()]);
-  ok(rows(`SELECT body FROM {p}tkm_replies WHERE ID = ${editId}`)[0].body === 'ویرایش‌شده ' + stamp, 'reply edited in place');
-
-  // date edit (datetime-local, site timezone)
-  await page.fill('#date_ticket', '2026-01-15T10:30');
-  await Promise.all([page.waitForNavigation(), page.locator('.tkm-head [data-save]').click()]);
-  t = rows(`SELECT create_date FROM {p}tkm_tickets WHERE ID = ${ticket.ID}`)[0];
-  ok(/^2026-01-15 \d\d:30:00$/.test(t.create_date), 'creation date saved as a valid datetime', t.create_date);
-
-  // delete reply
-  await page.locator(`#reply-${editId} [data-delete-reply]`).click();
-  await Promise.all([page.waitForNavigation(), page.locator('.tkm-modal [data-ok]').click()]);
-  ok(rows(`SELECT COUNT(*) AS c FROM {p}tkm_replies WHERE ID = ${editId}`)[0].c == 0, 'reply deleted after confirm');
-
-  // reply & close
-  await fillEditor(page, 'reply_content', 'حل شد');
-  await Promise.all([page.waitForNavigation(), page.click('[data-reply-close]')]);
-  ok(rows(`SELECT status FROM {p}tkm_tickets WHERE ID = ${ticket.ID}`)[0].status === 'closed', '"send & close" closes the ticket');
   ok(page.jsErrors.length === 0, 'no JS errors so far', page.jsErrors.join(' | '));
 
   console.log('\nDepartments');
@@ -174,9 +254,28 @@ async function fillEditor(page, id, text) {
   ok(rows(`SELECT COUNT(*) AS c FROM {p}tkm_departments WHERE ID = ${dept.ID}`)[0].c == 0, 'department deleted after confirm');
   ok(rows(`SELECT COUNT(*) AS c FROM {p}tkm_users WHERE department_id = ${dept.ID}`)[0].c == 0, 'its staff assignments removed');
 
-  console.log('\nMy queue');
-  await page.goto(A('tkm-my-departments', '&queue=all'));
-  ok(await page.locator('.tkm-table tbody tr, .tkm-empty').first().isVisible(), 'my queue renders');
+  console.log('\nTeam & tags');
+  await page.goto(A('tkm-departments'));
+  await page.waitForSelector('.tkm-tagm__row, #tkm-tag-manager .tkm-ib-none');
+  await page.fill('[data-tag-new] [name="name"]', 'برچسب ' + stamp);
+  await page.click('[data-tag-new] [type="submit"]');
+  await page.waitForTimeout(900);
+  ok(rows(`SELECT COUNT(*) AS c FROM {p}tkm_tags WHERE name = 'برچسب ${stamp}'`)[0].c == 1, 'tag created from the team page');
+
+  console.log('\nAgent scope');
+  const agent = await session(browser, 'nima');
+  await agent.page.goto(A('tkm-tickets') + '#/view/all');
+  await agent.page.waitForSelector('.tkm-ib-item[data-id], .tkm-ib-empty');
+  const nimaId = wp("echo get_user_by('login','nima')->ID;");
+  const visible = Number(rows(`SELECT COUNT(*) AS c FROM {p}tkm_tickets WHERE status != 'trash' AND assignee_id = ${nimaId}`)[0].c);
+  ok((await agent.page.locator('.tkm-ib-item[data-id]').count()) === visible, 'agent without a department sees only tickets assigned to them', `${visible}`);
+  ok((await agent.page.locator('.tkm-nav__item').count()) === 2, 'agent sees only dashboard + inbox in the nav');
+  const foreign = rows(`SELECT ID FROM {p}tkm_tickets WHERE (assignee_id IS NULL OR assignee_id != ${nimaId}) LIMIT 1`)[0].ID;
+  const denied = await agent.page.evaluate(async (id) => (await fetch(TKM_APP.root + 'tickets/' + id, { headers: { 'X-WP-Nonce': TKM_APP.nonce } })).status, foreign);
+  ok(denied === 403, 'agent cannot open a ticket outside their scope via REST', String(denied));
+  await agent.page.goto(A('tkm-reports'));
+  ok(await agent.page.locator('.tkm-empty__title', { hasText: 'دسترسی محدود' }).isVisible(), 'reports are manager-only');
+  await agent.context.close();
 
   console.log('\nSettings');
   await page.goto(A('tkm-settings'));
@@ -207,13 +306,14 @@ async function fillEditor(page, id, text) {
 
   console.log('\nResponsive');
   const mobile = await session(browser, 'admin', { viewport: { width: 390, height: 844 } });
-  for (const p of ['tkm-analysis', 'tkm-tickets', 'tkm-new-ticket', 'tkm-departments', 'tkm-my-departments', 'tkm-settings']) {
+  for (const p of ['tkm-analysis', 'tkm-tickets', 'tkm-new-ticket', 'tkm-departments', 'tkm-reports', 'tkm-automations', 'tkm-settings']) {
     await mobile.page.goto(A(p));
     ok(await noHorizontalOverflow(mobile.page), `no horizontal overflow at 390px: ${p}`);
   }
-  await mobile.page.goto(A('tkm-edit-ticket', '&id=' + ticket.ID));
-  ok(await noHorizontalOverflow(mobile.page), 'no horizontal overflow at 390px: tkm-edit-ticket');
-  await shot(mobile.page, 'admin-mobile-workspace');
+  await mobile.page.goto(A('tkm-tickets') + '#/ticket/' + ticket.ID);
+  await mobile.page.waitForSelector('[data-composer]');
+  ok(await noHorizontalOverflow(mobile.page) && await mobile.page.locator('[data-composer]').isVisible(), 'mobile inbox shows the conversation full-width');
+  await shot(mobile.page, 'admin-mobile-inbox');
   await mobile.page.goto(A('tkm-analysis'));
   await shot(mobile.page, 'admin-mobile-dashboard');
 

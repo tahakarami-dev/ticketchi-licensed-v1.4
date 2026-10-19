@@ -104,6 +104,23 @@ include TKM_VIEWS_PATH . 'admin/partials/page-head.php';
                 </div>
             <?php endif; ?>
         </section>
+
+        <section class="tkm-card" id="tkm-team-agents">
+            <header class="tkm-card__head"><div><h2 class="tkm-card__title">کارشناسان و حجم کار</h2><p class="tkm-card__sub">تیکت‌های باز سپرده‌شده به هر کارشناس</p></div></header>
+            <div class="tkm-card__body" data-agents><span class="tkm-spinner"></span></div>
+        </section>
+
+        <section class="tkm-card" id="tkm-tag-manager">
+            <header class="tkm-card__head"><div><h2 class="tkm-card__title">برچسب‌ها</h2><p class="tkm-card__sub">برای دسته‌بندی تیکت‌ها، فیلتر صندوق و قوانین اتوماسیون</p></div></header>
+            <div class="tkm-card__body">
+                <form class="tkm-tagm__new" data-tag-new>
+                    <input type="color" class="tkm-tagm__color" name="color" value="#6366f1" aria-label="رنگ برچسب">
+                    <input type="text" class="tkm-input" name="name" maxlength="64" placeholder="نام برچسب جدید، مثلاً: VIP" aria-label="نام برچسب" required>
+                    <button type="submit" class="tkm-btn tkm-btn--primary"><?php echo tkm_icon('plus', 16); ?> افزودن</button>
+                </form>
+                <div class="tkm-tagm__list" data-tags><span class="tkm-spinner"></span></div>
+            </div>
+        </section>
     </div>
 
     <aside class="tkm-ws__side">

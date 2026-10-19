@@ -2,7 +2,7 @@
 /*
 Plugin Name:  تیکت‌چی
 Description: با تیکت‌چی، مدیریت تیکت‌های پشتیبانی در وردپرس را متحول کنید. این افزونه قدرتمند، با ظاهری جذاب و مدرن و امکاناتی که واقعاً به کارتان می‌آید، تجربه‌ای حرفه‌ای و بی‌دردسر را برای شما و کاربرانتان رقم می‌زند. پشتیبانی را از حالت تکراری خارج کنید!
-Version: 1.4.0
+Version: 2.0.0
 Author: طاها کرمی
 Author URI: https://www.rtl-theme.com/author/taha-karami
 */
@@ -125,11 +125,14 @@ if (!class_exists('TKM_Core', false)) {
             require_once  TKM_INC_PATH . 'functions.php';
             require_once  TKM_INC_PATH . 'tkm-ui.php';
             require_once  TKM_INC_PATH . 'admin/abstract/base-menu.php';
+            require_once  TKM_PATH . 'src/autoload.php';
 
             register_activation_hook(TKM_BASE_FILE, [$this, 'active']);
             register_deactivation_hook(TKM_BASE_FILE, [$this, 'deactive']);
 
             tkm_settings();
+            \Ticketchi\Plugin::boot();
+
             if (is_admin()) {
 
                 new TKM_MENU();
@@ -150,6 +153,7 @@ if (!class_exists('TKM_Core', false)) {
         public function active()
         {
             TKM_DB::create_table();
+            \Ticketchi\Plugin::activate();
             delete_option('tkm_rewrite_version');
 
             if (! wp_next_scheduled('tkm_auto_close')) {
@@ -180,11 +184,15 @@ if (!class_exists('TKM_Core', false)) {
             if (!empty($tickets) && class_exists('TKM_Ticket_Manager')) {
                 $ticket_manager = new TKM_Ticket_Manager();
                 foreach ($tickets as $ticket_id) {
-                    $ticket_manager->update_status($ticket_id, 'closed');
+                    \Ticketchi\Domain\Tickets::update($ticket_id, ['status' => 'closed'], 0);
                 }
             }
         }
-        public function deactive() {}
+        public function deactive()
+        {
+            \Ticketchi\Plugin::deactivate();
+            wp_clear_scheduled_hook('tkm_auto_close');
+        }
 
         public function admin_php_notice()
         { ?>

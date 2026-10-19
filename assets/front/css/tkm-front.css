@@ -270,3 +270,39 @@
   .tkm-ui .tkm-composer__foot .tkm-btn { width: 100%; }
   .tkm-ui .tkm-attach__voice { margin-inline-start: 0; }
 }
+
+/* ───────── Knowledge-base suggestions (new ticket) ───────── */
+.tkm-ui .tkm-kb-suggest { padding: 14px 16px; border-radius: var(--tkm-r); background: color-mix(in oklab, var(--tkm-primary) 6%, var(--tkm-surface)); border: 1px solid color-mix(in oklab, var(--tkm-primary) 22%, var(--tkm-border)); animation: tkm-pop .2s var(--tkm-ease) both; }
+.tkm-ui .tkm-kb-suggest[hidden] { display: none; }
+.tkm-ui .tkm-kb-suggest__head { display: flex; align-items: center; gap: 8px; font-size: var(--tkm-fs-sm); font-weight: 700; color: var(--tkm-primary); }
+.tkm-ui .tkm-kb-suggest__list { display: grid; gap: 4px; }
+.tkm-ui .tkm-kb-suggest__list a { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; color: var(--tkm-text) !important; text-decoration: none !important; }
+.tkm-ui .tkm-kb-suggest__list a:hover { background: var(--tkm-surface); }
+.tkm-ui .tkm-kb-suggest__list strong { font-size: var(--tkm-fs-sm); }
+.tkm-ui .tkm-kb-suggest__list span { font-size: var(--tkm-fs-xs); color: var(--tkm-text-3); line-height: 1.8; }
+
+/* ───────── Help center [ticketchi_kb] ───────── */
+.tkm-ui .tkm-kb__hero { text-align: center; padding: 40px 20px 34px; border-radius: var(--tkm-r-lg); background: radial-gradient(120% 140% at 50% 0%, color-mix(in oklab, var(--tkm-primary) 14%, var(--tkm-surface)), var(--tkm-surface) 70%); border: 1px solid var(--tkm-border); display: grid; justify-items: center; gap: 10px; }
+.tkm-ui .tkm-kb__title { font-size: clamp(22px, 4vw, 30px); font-weight: 800; color: var(--tkm-text); }
+.tkm-ui .tkm-kb__lead { color: var(--tkm-text-2); font-size: var(--tkm-fs-md); max-width: 520px; line-height: 1.9; }
+.tkm-ui .tkm-kb__search { display: flex; align-items: center; gap: 8px; width: min(560px, 100%); margin-top: 10px; padding: 6px 6px 6px 6px; padding-inline-start: 16px; border-radius: 16px; background: var(--tkm-surface); border: 1px solid var(--tkm-border-strong); box-shadow: var(--tkm-shadow-sm); color: var(--tkm-text-3); }
+.tkm-ui .tkm-kb__search:focus-within { border-color: var(--tkm-primary); box-shadow: 0 0 0 4px var(--tkm-primary-ring); }
+.tkm-ui input.tkm-kb__input { all: unset; flex: 1; min-width: 0; height: 44px; font-size: var(--tkm-fs-md); color: var(--tkm-text); }
+.tkm-ui .tkm-kb__cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.tkm-ui .tkm-kb__cat { display: grid; gap: 6px; align-content: start; padding: 20px; text-decoration: none !important; color: var(--tkm-text) !important; transition: border-color var(--tkm-dur), transform var(--tkm-dur), box-shadow var(--tkm-dur); }
+.tkm-ui .tkm-kb__cat:hover { border-color: var(--tkm-primary); transform: translateY(-2px); box-shadow: var(--tkm-shadow-sm); }
+.tkm-ui .tkm-kb__cat-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--tkm-primary-soft); color: var(--tkm-primary); margin-bottom: 4px; }
+.tkm-ui .tkm-kb__cat strong { font-size: var(--tkm-fs-md); }
+.tkm-ui .tkm-kb__cat-desc { font-size: var(--tkm-fs-sm); color: var(--tkm-text-3); line-height: 1.8; }
+.tkm-ui .tkm-kb__cat-count { font-size: var(--tkm-fs-xs); color: var(--tkm-text-3); }
+.tkm-ui .tkm-kb__results .tkm-card__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tkm-ui .tkm-kb__list { padding: 6px; }
+.tkm-ui .tkm-kb__list a { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: center; padding: 14px 16px; border-radius: 12px; color: var(--tkm-text) !important; text-decoration: none !important; }
+.tkm-ui .tkm-kb__list a:hover { background: var(--tkm-surface-2); }
+.tkm-ui .tkm-kb__list strong { font-size: var(--tkm-fs-md); }
+.tkm-ui .tkm-kb__list span { grid-column: 1; font-size: var(--tkm-fs-sm); color: var(--tkm-text-3); line-height: 1.8; }
+.tkm-ui .tkm-kb__list .tkm-icon { grid-column: 2; grid-row: 1 / span 2; color: var(--tkm-text-3); }
+.tkm-ui .tkm-kb__cta { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px 24px; border-radius: var(--tkm-r-lg); background: var(--tkm-surface-2); border: 1px solid var(--tkm-border); }
+.tkm-ui .tkm-kb__cta div { display: grid; gap: 2px; }
+.tkm-ui .tkm-kb__cta strong { font-size: var(--tkm-fs-md); color: var(--tkm-text); }
+.tkm-ui .tkm-kb__cta span { font-size: var(--tkm-fs-sm); color: var(--tkm-text-3); }

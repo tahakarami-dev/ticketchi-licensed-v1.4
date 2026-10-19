@@ -29,26 +29,21 @@ class TKM_Reply_Manager
             return $errors;
         }
 
-        $this->wpdb->insert($this->table, [
-            'ticket_id' => $this->ticket_id,
-            'body' => wp_kses_post($data['body']),
-            'creator_id' => $data['creator_id'] ? $data['creator_id'] : NULL,
-            'file' => $data['file'] ? $data['file'] : null,
-            'voice' => $data['voice'] ? $data['voice'] : NULL,
-        ], [
-            '%d',
-            '%s',
-            '%d',
-            '%s',
-            '%s'
-        ]);
+        $result = \Ticketchi\Domain\Tickets::reply($this->ticket_id, [
+            'body'  => $data['body'],
+            'file'  => !empty($data['file']) ? $data['file'] : null,
+            'voice' => !empty($data['voice']) ? $data['voice'] : null,
+        ], !empty($data['creator_id']) ? (int) $data['creator_id'] : 0);
 
-        return $this->wpdb->insert_id;
+        return is_wp_error($result) ? [$result->get_error_message()] : $result;
     }
 
-    public function get_replys()
+    /**
+     * @param bool $include_internal false for the customer panel (hides staff-only notes)
+     */
+    public function get_replys($include_internal = true)
     {
-        return $this->wpdb->get_results($this->wpdb->prepare("SELECT * FROM " . $this->table . " WHERE ticket_id = %d ORDER BY create_date ASC", $this->ticket_id));
+        return \Ticketchi\Domain\Tickets::replies($this->ticket_id, $include_internal);
     }
 
     public function delete_reply($reply_id)

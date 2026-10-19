@@ -89,19 +89,18 @@ class TKM_Front_AJAX
             $ticket_data['voice'] = esc_url_raw($voice_upload_result['url']);
         }
 
-        $ticket_manager = new TKM_Ticket_Manager();
-        $ticket = $ticket_manager->insert($ticket_data);
+        $ticket_id = \Ticketchi\Domain\Tickets::create($ticket_data, get_current_user_id(), 'customer');
 
-        if (isset($ticket['ticket_id']) && $ticket['ticket_id']) {
-            do_action('tkm_submit_ticket', $ticket['ticket_id']);
-            $this->make_response([
-                'success'   => true,
-                'result'    => TKM_Ticket_Url::all(),
-                'ticket_id' => (int) $ticket['ticket_id'],
-            ]);
+        if (is_wp_error($ticket_id)) {
+            $this->make_response(['success' => false, 'result' => [$ticket_id->get_error_message()]]);
         }
 
-        $this->make_response(['success' => false, 'result' => $ticket ? $ticket : 'ثبت تیکت با خطا مواجه شد.']);
+        do_action('tkm_submit_ticket', $ticket_id);
+        $this->make_response([
+            'success'   => true,
+            'result'    => TKM_Ticket_Url::all(),
+            'ticket_id' => (int) $ticket_id,
+        ]);
     }
 
     public function make_response($result)
@@ -161,20 +160,12 @@ class TKM_Front_AJAX
             $data_reply['voice'] = esc_url_raw($voice_upload_result['url']);
         }
 
-        // A voice note or attachment alone is a valid reply.
-        if (trim(wp_strip_all_tags($data_reply['body'])) === '' && ($data_reply['file'] || $data_reply['voice'])) {
-            $data_reply['body'] = ' ';
-        }
+        $data_reply['status'] = $status;
+        $insert = \Ticketchi\Domain\Tickets::reply($ticket_id, $data_reply, $user_id);
 
-        $reply_manager = new TKM_Reply_Manager($ticket_id);
-        $insert = $reply_manager->insert_reply($data_reply);
-
-        if (is_numeric($insert) && $insert) {
-            $ticket_manager->update_status($ticket_id, $status);
-            $ticket_manager->update_reply_date($ticket_id);
-
+        if (!is_wp_error($insert)) {
             $ticket = $ticket_manager->get_info_ticket($ticket_id);
-            $replies = $reply_manager->get_replys();
+            $replies = \Ticketchi\Domain\Tickets::replies($ticket_id, false);
             ob_start();
             include TKM_VIEWS_PATH . 'front/reply.php';
             $replies_html = ob_get_clean();
@@ -189,7 +180,7 @@ class TKM_Front_AJAX
             ]);
         }
 
-        $this->make_response(['success' => false, 'result' => is_array($insert) ? implode(' ', $insert) : 'ثبت پاسخ با خطا مواجه شد.']);
+        $this->make_response(['success' => false, 'result' => $insert->get_error_message()]);
     }
 
     public function submit_rating()
@@ -222,14 +213,17 @@ class TKM_Front_AJAX
         $result = $wpdb->insert(
             $table_name,
             [
-                'ticket_id' => $ticket_id,
-                'user_id'   => $user_id,
-                'rating'    => $rating,
+                'ticket_id'   => $ticket_id,
+                'user_id'     => $user_id,
+                'rating'      => $rating,
+                'create_date' => gmdate('Y-m-d H:i:s'),
             ],
-            ['%d', '%d', '%d']
+            ['%d', '%d', '%d', '%s']
         );
 
         if ($result) {
+            \Ticketchi\Domain\Activity::log($ticket_id, 'rating', ['rating' => $rating], $user_id);
+            do_action('ticketchi/ticket_rated', $ticket_id, $rating, $user_id);
             wp_send_json_success(['message' => 'امتیاز با موفقیت ثبت شد.', 'rating' => $rating]);
         }
 

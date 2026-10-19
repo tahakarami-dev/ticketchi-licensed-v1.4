@@ -317,7 +317,7 @@
             el.hidden = false;
             input.value = '';
             paint([{ title: 'رفتن به', items: pages('') }]);
-            setTimeout(function () { input.focus(); }, 10);
+            input.focus();
         }
         function close() { el.hidden = true; }
 

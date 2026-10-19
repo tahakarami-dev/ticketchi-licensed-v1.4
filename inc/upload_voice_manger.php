@@ -1,7 +1,10 @@
 <?php
 
+defined('ABSPATH') || exit('NO Access');
+
 class TKM_Upload_Voice
 {
+    const MAX_BYTES = 10485760; // 10MB ≈ several minutes of webm/opus
 
     public $voice;
 
@@ -12,28 +15,40 @@ class TKM_Upload_Voice
 
     public function upload()
     {
-        add_filter('upload_dir', [$this, 'custom_upload_dir']);
-
-        if (!function_exists('wp_handle_upload')) {
-            require_once(ABSPATH . 'wp-admin/includes/file.php');
+        if (!is_string($this->voice) || !preg_match('#^data:audio/[\w.+-]+(;codecs=[\w.,-]+)?;base64,#i', $this->voice)) {
+            return ['success' => false, 'message' => 'فرمت فایل صوتی معتبر نیست'];
         }
 
-        $upload_overrides = array('test_form' => false);
+        preg_match('#^data:audio/([\w.+-]+)#i', $this->voice, $mime);
+        $extensions = ['webm' => 'webm', 'ogg' => 'ogg', 'mp4' => 'm4a', 'x-m4a' => 'm4a', 'aac' => 'aac', 'mpeg' => 'mp3', 'wav' => 'wav'];
+        $extension = isset($mime[1], $extensions[strtolower($mime[1])]) ? $extensions[strtolower($mime[1])] : 'webm';
 
-        $decoded_audio = base64_decode(preg_replace('#^data:audio/\w+;base64,#i', '', $this->voice));  
+        $decoded_audio = base64_decode(preg_replace('#^data:audio/[^,]+,#i', '', $this->voice), true);
 
-        $file_name = 'voice_' . time() . '.webm';  
+        if ($decoded_audio === false || strlen($decoded_audio) === 0) {
+            return ['success' => false, 'message' => 'فایل صوتی خالی است'];
+        }
+
+        if (strlen($decoded_audio) > self::MAX_BYTES) {
+            return ['success' => false, 'message' => 'حجم پیام صوتی بیش از حد مجاز است'];
+        }
+
+        add_filter('upload_dir', [$this, 'custom_upload_dir']);
         $upload_dir = wp_upload_dir();
-        $file_path = $upload_dir['path'] . '/' . $file_name;
-        $file_url = $upload_dir['url'] . '/' . $file_name;
+        remove_filter('upload_dir', [$this, 'custom_upload_dir']);
 
-        file_put_contents($file_path, $decoded_audio);
-
-        if (file_exists($file_path)) {
-            return ['success' => true, 'url' => $file_url];
-        } else {
+        if (!empty($upload_dir['error'])) {
             return ['success' => false, 'message' => 'خطا در ذخیره‌سازی ویس'];
         }
+
+        $file_name = wp_unique_filename($upload_dir['path'], 'voice_' . time() . '_' . wp_generate_password(6, false) . '.' . $extension);
+        $file_path = trailingslashit($upload_dir['path']) . $file_name;
+
+        if (file_put_contents($file_path, $decoded_audio) === false) {
+            return ['success' => false, 'message' => 'خطا در ذخیره‌سازی ویس'];
+        }
+
+        return ['success' => true, 'url' => trailingslashit($upload_dir['url']) . $file_name];
     }
 
     public function custom_upload_dir($args)

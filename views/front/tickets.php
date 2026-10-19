@@ -1,157 +1,196 @@
 <?php
+defined('ABSPATH') || exit('NO Access');
+
+if (!is_user_logged_in()) {
+    include TKM_VIEWS_PATH . 'front/partials/login-required.php';
+    return;
+}
 
 $user_id = get_current_user_id();
 
-$type = isset($_GET['type']) ? $_GET['type'] : 'all';
-$status = isset($_GET['status']) ? $_GET['status'] : 'all';
-$orderby = isset($_GET['orderby']) ? $_GET['orderby'] : 'reply-date';
-$page_num = isset($_GET['page_num']) ? $_GET['page_num'] : 1;
-$priority = isset($_GET['priority']) ? $_GET['priority'] : 'all-priority';
+$type     = isset($_GET['type']) ? sanitize_key($_GET['type']) : 'all';
+$status   = isset($_GET['status']) ? sanitize_key($_GET['status']) : 'all';
+$orderby  = isset($_GET['orderby']) ? sanitize_key($_GET['orderby']) : 'reply-date';
+$page_num = isset($_GET['page_num']) ? max(1, absint($_GET['page_num'])) : 1;
+$priority = isset($_GET['priority']) ? sanitize_key($_GET['priority']) : 'all-priority';
+
+$type     = in_array($type, ['all', 'send', 'get'], true) ? $type : 'all';
+$orderby  = in_array($orderby, ['reply-date', 'create-date'], true) ? $orderby : 'reply-date';
+$priority = in_array($priority, ['all-priority', 'low', 'medium', 'high'], true) ? $priority : 'all-priority';
 
 $ticket_manager = new TKM_Ticket_Manager();
-$tickets = $ticket_manager->get_tickets($user_id, $type, $status, $orderby, $page_num, $priority);
-
-$total_count = $ticket_manager->ticket_count($user_id, $type, $status, $orderby);
+$tickets        = $ticket_manager->get_tickets($user_id, $type, $status, $orderby, $page_num, $priority);
+$total_count    = (int) $ticket_manager->ticket_count($user_id, $type, $status, $priority);
+$all_count      = (int) $ticket_manager->ticket_count($user_id, NULL, NULL);
+$per_page       = 10;
+$total_pages    = (int) ceil($total_count / $per_page);
 
 $department_manager = new TKM_Front_Department_Manager();
-
 $statuses = tkm_get_status();
 
-$is_shortcode = tkm_settings('shortcode');
+// Reply counts for the visible tickets in a single query.
+$reply_counts = [];
+if ($tickets) {
+    global $wpdb;
+    $ids = array_map('intval', wp_list_pluck($tickets, 'ID'));
+    $rows = $wpdb->get_results("SELECT ticket_id, COUNT(*) AS total FROM {$wpdb->prefix}tkm_replies WHERE ticket_id IN (" . implode(',', $ids) . ") GROUP BY ticket_id");
+    foreach ($rows as $row) {
+        $reply_counts[(int) $row->ticket_id] = (int) $row->total;
+    }
+}
+
+$list_url = tkm_url('list');
+$filter_url = function ($args) use ($type, $status, $orderby, $priority, $list_url) {
+    $query = array_merge(['type' => $type, 'status' => $status, 'orderby' => $orderby, 'priority' => $priority], $args);
+    $query = array_filter($query, function ($v, $k) {
+        return !in_array($v, ['all', 'all-priority', 'reply-date'], true);
+    }, ARRAY_FILTER_USE_BOTH);
+    return add_query_arg($query, remove_query_arg(['type', 'status', 'orderby', 'priority', 'page_num'], $list_url));
+};
+
+$title = tkm_settings('title_dashboard') ? tkm_settings('title_dashboard') : 'داشبورد تیکت‌ها';
+$description = tkm_settings('description_dashboard') ? tkm_settings('description_dashboard') : 'مدیریت تیکت‌های پشتیبانی شما';
+$has_filters = $type !== 'all' || $status !== 'all' || $priority !== 'all-priority';
+$current_user = wp_get_current_user();
 ?>
-<?php if (is_user_logged_in()): ?>
-    <div class="tkm-shortcode-wrapper">
-        <div class="container_tkm">
-            <div class="header_tkm flex items-center  justify-between">
-                <div class="header-right">
-                    <h2 class="title-page-tickets"><?php echo tkm_settings('title_dashboard') ? tkm_settings('title_dashboard') : 'داشبورد تیکت‌ها ' ?></h2>
-                    <p class="text-header"><?php echo tkm_settings('description_dashboard') ? tkm_settings('description_dashboard') : 'مدیریت تیکت‌های پشتیبانی شما' ?></p>
-                </div>
-                <div class="header-left">
-                    <a href="<?php echo $is_shortcode ? TKM_Shortcode_Url::new() : TKM_Ticket_Url::new(); ?>" class="flex new-ticket-btn justify-center items-center">
-                        <img width="18px" src="<?php echo TKM_FRONT_ASSETS . '/images/plus.png' ?>" alt="">
-                        ثبت تیکت جدید
-                    </a>
-                </div>
-            </div>
+<div class="tkm-ui tkm-app" data-view="list">
 
-            <div class="flex passage_status flex-col">
-                <div class="status-box all-ticket-box">
-                    <div class="box_icon" style="color:#2A48CD;">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-                        </svg>
-                    </div>
-                    <h5 class="name-status">تیکت ها</h5>
-                    <span class="number-status"><?php echo convert_to_persian_numbers($ticket_manager->ticket_count($user_id, NULL, NULL)) ?></span>
-                </div>
-
-                <?php foreach ($statuses as $item): ?>
-                    <div class="status-box">
-                        <div class="box_icon" style="color:<?php echo $item['color'] ?> ">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
-                            </svg>
-
-                        </div>
-                        <h5 class="name-status"><?php echo $item['name'] ?></h5>
-                        <span class="number-status"> <?php echo convert_to_persian_numbers($ticket_manager->ticket_count($user_id, NULL, $item['slug'])) ?></span>
-                    </div>
-                <?php endforeach ?>
-
-            </div>
+    <header class="tkm-hero">
+        <div class="tkm-hero__text">
+            <span class="tkm-eyebrow"><?php echo tkm_icon('sparkles', 14); ?> سلام <?php echo esc_html($current_user->display_name); ?></span>
+            <h2 class="tkm-hero__title"><?php echo esc_html($title); ?></h2>
+            <p class="tkm-hero__desc"><?php echo esc_html($description); ?></p>
         </div>
-        <div class="main_tickets ">
-            <div class="header_main">
-                <form class="flex form-filter" method="get">
-                    <select class="filter" name="type">
-                        <option value="all" <?php selected($type, 'all') ?>>نوع تیکت</option>
-                        <option value="send" <?php selected($type, 'send') ?>>ارسالی</option>
-                        <option value="get" <?php selected($type, 'get') ?>>دریافتی</option>
-                    </select>
-                    <select class="filter" name="status">
-                        <option value="all" <?php selected($status, 'all') ?>>وضعیت تیکت</option>
-                        <?php foreach ($statuses as $_status): ?>
-                            <option <?php selected($status, $_status['slug']) ?> value="<?php echo $_status['slug'] ?>"><?php echo $_status['name'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <select class="filter" name="orderby">
-                        <option <?php selected($orderby, 'reply-date') ?> value="reply-date">تاریخ پاسخ</option>
-                        <option <?php selected($orderby, 'create-date') ?> value="create-date">تاریخ ایجاد</option>
-                    </select>
+        <a href="<?php echo esc_url(tkm_url('new')); ?>" class="tkm-btn tkm-btn--primary tkm-btn--lg">
+            <?php echo tkm_icon('plus', 18); ?> ثبت تیکت جدید
+        </a>
+    </header>
 
-                    <select class="filter" name="priority">
-                        <option <?php selected($priority, 'all-priority') ?> value="all-priority"> اولویت</option>
-                        <option <?php selected($priority, 'low') ?> value="low">کم </option>
-                        <option <?php selected($priority, 'medium') ?> value="medium">متوسط </option>
-                        <option <?php selected($priority, 'high') ?> value="high">زیاد </option>
-                    </select>
-                    <button type="submit" id="tkm-filter-btn" class="tkm-filter-btn">فیلتر</button>
-                </form>
+    <nav class="tkm-stats" aria-label="وضعیت تیکت‌ها">
+        <a class="tkm-stat <?php echo $status === 'all' ? 'is-active' : ''; ?>" href="<?php echo esc_url($filter_url(['status' => 'all'])); ?>" style="--c: var(--tkm-primary)">
+            <span class="tkm-stat__icon"><?php echo tkm_icon('inbox', 18); ?></span>
+            <span class="tkm-stat__label">همه تیکت‌ها</span>
+            <strong class="tkm-stat__value"><?php echo esc_html(tkm_fa($all_count)); ?></strong>
+        </a>
+        <?php foreach ($statuses as $item) : ?>
+            <a class="tkm-stat <?php echo $status === $item['slug'] ? 'is-active' : ''; ?>" href="<?php echo esc_url($filter_url(['status' => $item['slug']])); ?>" style="--c: <?php echo esc_attr($item['color'] ?: '#8a94a6'); ?>">
+                <span class="tkm-stat__icon"><?php echo tkm_icon('ticket', 18); ?></span>
+                <span class="tkm-stat__label"><?php echo esc_html(trim($item['name'])); ?></span>
+                <strong class="tkm-stat__value"><?php echo esc_html(tkm_fa($ticket_manager->ticket_count($user_id, NULL, $item['slug']))); ?></strong>
+            </a>
+        <?php endforeach; ?>
+    </nav>
+
+    <section class="tkm-card tkm-list-card">
+        <form class="tkm-toolbar" method="get" action="<?php echo esc_url(remove_query_arg(['type', 'status', 'orderby', 'priority', 'page_num'], $list_url)); ?>" data-autosubmit>
+            <?php
+            // Keep query args that belong to the host page (e.g. ?page_id=12 on plain permalinks).
+            $base_query = wp_parse_url($list_url, PHP_URL_QUERY);
+            if ($base_query) {
+                parse_str($base_query, $base_args);
+                foreach ($base_args as $key => $value) {
+                    if (is_scalar($value) && !in_array($key, ['type', 'status', 'orderby', 'priority', 'page_num'], true)) {
+                        echo '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+                    }
+                }
+            }
+            ?>
+            <div class="tkm-segmented" role="radiogroup" aria-label="نوع تیکت">
+                <label><input type="radio" name="type" value="all" <?php checked($type, 'all'); ?>><span>همه</span></label>
+                <label><input type="radio" name="type" value="send" <?php checked($type, 'send'); ?>><span><?php echo tkm_icon('send', 14); ?> ارسالی</span></label>
+                <label><input type="radio" name="type" value="get" <?php checked($type, 'get'); ?>><span><?php echo tkm_icon('inbox', 14); ?> دریافتی</span></label>
             </div>
 
-            <div class="tickets-list">
-                <?php if ($tickets) : ?>
-                    <?php foreach ($tickets as $ticket): ?>
-                        <div class="ticket items-center justify-between">
-                            <div class="tk_right">
-                                <a class="ticket-title" href="<?php echo $is_shortcode ? TKM_Shortcode_Url::single($ticket->ID) : TKM_Ticket_Url::single($ticket->ID) ?>">
-                                    <?php echo esc_html($ticket->title) ?>
-                                </a>
-                                <?php $department = $department_manager->get_department($ticket->department_id) ?>
-                                <p class="text-right department-name"><?php echo esc_html($department->name) ?></p>
-                            </div>
-                            <div class="tk_center">
-                                <div class="tk-status-box-inner">
-                                    <button style="background-color: <?php echo get_status_color($ticket->status) ?>" class="status_name"><?php echo get_status_name($ticket->status) ?></button>
-                                </div>
-                                <div>
-                                    <p class="reply_date"><?php echo wp_date(
-                                                                get_option('date_format') . ' ' . get_option('time_format'),
-                                                                strtotime($ticket->reply_date)
-                                                            ); ?></p>
-                                </div>
-                            </div>
-
-                            <div id="btn-show" class="tk_left flex ">
-                                <a class="flex p-4 btn-eye" style="text-decoration: none;" href="<?php echo $is_shortcode ? TKM_Shortcode_Url::single($ticket->ID) : TKM_Ticket_Url::single($ticket->ID) ?>">
-                                    <img width="20px" src="<?php echo TKM_FRONT_ASSETS . '/images/eye.png' ?>" alt="">
-                                    <span class="btn-ticket-show">مشاهده</span>
-                                </a>
-                            </div>
-                        </div>
-
-
+            <div class="tkm-toolbar__filters">
+                <select class="tkm-select tkm-select--sm" name="status" aria-label="وضعیت">
+                    <option value="all" <?php selected($status, 'all'); ?>>همه وضعیت‌ها</option>
+                    <?php foreach ($statuses as $_status) : ?>
+                        <option value="<?php echo esc_attr($_status['slug']); ?>" <?php selected($status, $_status['slug']); ?>><?php echo esc_html(trim($_status['name'])); ?></option>
                     <?php endforeach; ?>
-
-                    <?php
-                    $per_page = 10;
-                    $big = 99999999999999;
-
-                    $args = [
-                        'base' => preg_replace('/\?.*/', '', get_pagenum_link()) . '%_%',
-                        'format' => '?page_num=%#%',
-                        'current' => max(1, $page_num),
-                        'total' => ceil($total_count / $per_page),
-                        'type' => 'list',
-                        'prev_next' => false
-
-                    ];
-                    ?>
-                    <div class="link_page">
-                        <?php echo paginate_links($args) ?>
-                    </div>
-                    <?php
-                    ?>
-                <?php else: ?>
-                    <div class="not-found">
-                        <p>هیچ تیکتی یافت نشد.</p>
-                    </div>
+                </select>
+                <select class="tkm-select tkm-select--sm" name="priority" aria-label="اولویت">
+                    <option value="all-priority" <?php selected($priority, 'all-priority'); ?>>همه اولویت‌ها</option>
+                    <option value="low" <?php selected($priority, 'low'); ?>>اولویت کم</option>
+                    <option value="medium" <?php selected($priority, 'medium'); ?>>اولویت متوسط</option>
+                    <option value="high" <?php selected($priority, 'high'); ?>>اولویت زیاد</option>
+                </select>
+                <select class="tkm-select tkm-select--sm" name="orderby" aria-label="مرتب‌سازی">
+                    <option value="reply-date" <?php selected($orderby, 'reply-date'); ?>>آخرین فعالیت</option>
+                    <option value="create-date" <?php selected($orderby, 'create-date'); ?>>تاریخ ایجاد</option>
+                </select>
+                <noscript><button type="submit" class="tkm-btn tkm-btn--sm">اعمال</button></noscript>
+                <?php if ($has_filters) : ?>
+                    <a class="tkm-btn tkm-btn--ghost tkm-btn--sm" href="<?php echo esc_url($list_url); ?>"><?php echo tkm_icon('x', 14); ?> حذف فیلترها</a>
                 <?php endif; ?>
-
             </div>
+        </form>
 
-        </div>
-    </div>
-    </div>
-<?php endif; ?>
+        <?php if ($tickets) : ?>
+            <ul class="tkm-tickets">
+                <?php foreach ($tickets as $ticket) :
+                    $department = $department_manager->get_department($ticket->department_id);
+                    $replies = isset($reply_counts[(int) $ticket->ID]) ? $reply_counts[(int) $ticket->ID] : 0;
+                    $incoming = (int) $ticket->from_admin === 1 && (int) $ticket->user_id === $user_id;
+                ?>
+                    <li>
+                        <a class="tkm-ticket" href="<?php echo esc_url(tkm_url('single', $ticket->ID)); ?>">
+                            <span class="tkm-ticket__icon" style="--c: <?php echo esc_attr(get_status_color($ticket->status)); ?>">
+                                <?php echo tkm_icon($incoming ? 'inbox' : 'message', 18); ?>
+                            </span>
+                            <span class="tkm-ticket__main">
+                                <span class="tkm-ticket__title"><?php echo esc_html($ticket->title); ?></span>
+                                <span class="tkm-ticket__meta">
+                                    <span class="tkm-num"><?php echo esc_html(tkm_ticket_number($ticket->ID)); ?></span>
+                                    <span class="tkm-dot"></span>
+                                    <span><?php echo esc_html($department ? $department->name : '—'); ?></span>
+                                    <span class="tkm-dot"></span>
+                                    <span title="<?php echo esc_attr(tkm_date($ticket->reply_date)); ?>"><?php echo esc_html(tkm_time_ago($ticket->reply_date)); ?></span>
+                                    <?php if ($incoming) : ?>
+                                        <span class="tkm-badge tkm-badge--plain tkm-badge--incoming">از طرف پشتیبانی</span>
+                                    <?php endif; ?>
+                                </span>
+                            </span>
+                            <span class="tkm-ticket__side">
+                                <?php echo tkm_status_badge($ticket->status); ?>
+                                <span class="tkm-ticket__aux">
+                                    <?php echo tkm_priority_badge($ticket->priority); ?>
+                                    <span class="tkm-ticket__replies" title="تعداد پاسخ‌ها"><?php echo tkm_icon('messages', 14); ?><?php echo esc_html(tkm_fa($replies)); ?></span>
+                                </span>
+                            </span>
+                            <span class="tkm-ticket__chev"><?php echo tkm_icon('chevron-left', 18); ?></span>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+
+            <?php if ($total_pages > 1) : ?>
+                <nav class="tkm-pagination" aria-label="صفحه‌بندی">
+                    <?php
+                    echo paginate_links([
+                        'base'      => add_query_arg('page_num', '%#%'),
+                        'format'    => '',
+                        'current'   => $page_num,
+                        'total'     => $total_pages,
+                        'prev_text' => tkm_icon('chevron-right', 16) . '<span class="tkm-sr">قبلی</span>',
+                        'next_text' => tkm_icon('chevron-left', 16) . '<span class="tkm-sr">بعدی</span>',
+                        'type'      => 'plain',
+                        'before_page_number' => '',
+                    ]);
+                    ?>
+                    <span class="tkm-pagination__info"><?php echo esc_html('صفحه ' . tkm_fa($page_num) . ' از ' . tkm_fa($total_pages)); ?></span>
+                </nav>
+            <?php endif; ?>
+        <?php else : ?>
+            <div class="tkm-empty">
+                <div class="tkm-empty__art"><?php echo tkm_icon($has_filters ? 'search' : 'inbox', 30); ?></div>
+                <h3 class="tkm-empty__title"><?php echo $has_filters ? 'تیکتی با این فیلترها پیدا نشد' : 'هنوز تیکتی ثبت نکرده‌اید'; ?></h3>
+                <p class="tkm-empty__text"><?php echo $has_filters ? 'فیلترها را تغییر دهید یا همه تیکت‌ها را ببینید.' : 'هر سوال یا مشکلی دارید، تیم پشتیبانی آماده کمک به شماست.'; ?></p>
+                <?php if ($has_filters) : ?>
+                    <a class="tkm-btn" href="<?php echo esc_url($list_url); ?>">نمایش همه تیکت‌ها</a>
+                <?php else : ?>
+                    <a class="tkm-btn tkm-btn--primary" href="<?php echo esc_url(tkm_url('new')); ?>"><?php echo tkm_icon('plus', 16); ?> ثبت اولین تیکت</a>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+    </section>
+</div>

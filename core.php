@@ -70,6 +70,7 @@ class Core
         require_once TKM_INC_PATH . 'admin/codestar/codestar-framework.php';
         require_once TKM_INC_PATH . 'admin/tkm-settings.php';
         require_once  TKM_INC_PATH . 'functions.php';
+        require_once  TKM_INC_PATH . 'tkm-ui.php';
         require_once  TKM_INC_PATH . 'admin/abstract/base-menu.php';
 
         register_activation_hook(TKM_BASE_FILE, [$this, 'active']);
@@ -94,6 +95,7 @@ class Core
     public function active()
     {
         TKM_DB::create_table();
+        delete_option('tkm_rewrite_version');
 
         if (! wp_next_scheduled('tkm_auto_close')) {
             wp_schedule_event(time(), 'daily', 'tkm_auto_close');

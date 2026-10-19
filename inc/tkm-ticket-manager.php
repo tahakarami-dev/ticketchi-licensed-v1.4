@@ -133,7 +133,7 @@ class TKM_Ticket_Manager
         return $this->wpdb->get_results($this->wpdb->prepare($query, $args));
     }
 
-    public function ticket_count($user_id, $type = NULL, $status = NULL)
+    public function ticket_count($user_id, $type = NULL, $status = NULL, $priority = NULL)
     {
         if (!intval($user_id)) {
             return 0;
@@ -161,6 +161,11 @@ class TKM_Ticket_Manager
         if ($status && $status !== 'all') {
             $conditions[] = "status = %s";
             $args[] = $status;
+        }
+
+        if ($priority && $priority !== 'all-priority') {
+            $conditions[] = "priority = %s";
+            $args[] = $priority;
         }
 
         $sql = "SELECT COUNT(*) FROM " . $this->table . " WHERE " . implode(" AND ", $conditions);
@@ -246,6 +251,10 @@ class TKM_Ticket_Manager
 
     public function get_user_purchased_products($user_id)
     {
+        if (!function_exists('wc_get_orders')) {
+            return [];
+        }
+
         $customer_orders = wc_get_orders(array(
             'customer_id' => $user_id,
             'status' => array('wc-completed', 'wc-processing'), 

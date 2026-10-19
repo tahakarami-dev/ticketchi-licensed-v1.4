@@ -10,6 +10,10 @@ class TKM_Shortcode_Router {
 
     public function render_shortcode($atts) {
 
+        $previous_context = isset($GLOBALS['tkm_render_context']) ? $GLOBALS['tkm_render_context'] : null;
+        $GLOBALS['tkm_render_context'] = 'shortcode';
+        TKM_ASSETS::enqueue_front();
+
         ob_start();
 
         $action    = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : null;
@@ -34,6 +38,8 @@ class TKM_Shortcode_Router {
                 break;
         }
 
+        $GLOBALS['tkm_render_context'] = $previous_context;
+
         return ob_get_clean();
     }
 
@@ -43,7 +49,7 @@ class TKM_Shortcode_Router {
         if (file_exists($file)) {
             include $file;
         } else {
-            echo "<p>View not found: {$name}</p>";
+            echo '<p>View not found: ' . esc_html($name) . '</p>';
         }
     }
 }

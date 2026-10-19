@@ -2,6 +2,10 @@
 
 defined('ABSPATH') || exit('NO Access');
 
+/**
+ * Admin flash messages. Backed by a per-user transient (the old $_SESSION
+ * storage never worked because no session was ever started).
+ */
 class TKM_Flash_Message
 {
     const ERROR = 1;
@@ -11,44 +15,30 @@ class TKM_Flash_Message
 
     public static function add_message($message, $type = self::SUCCESS)
     {
-        if (!isset($_SESSION['tkm']['messages'])) {
-            $_SESSION['tkm']['messages'] = [];
-        }
-        $_SESSION['tkm']['messages'][] = ['body' => $message, 'type' => $type];
+        tkm_flash($message, self::get_type($type));
     }
 
     public static function show_message()
     {
-        if (isset($_SESSION['tkm']['messages']) && !empty($_SESSION['tkm']['messages'])) {
-            foreach ($_SESSION['tkm']['messages'] as $message) {
-                echo '<div class="notice is-dismissible ' . self::get_type($message['type']) . '">';
-                echo '<p>';
-                echo $message['body'];
-                echo '</p>';
-                echo '</div>';
-            }
-            self::empty_session(); 
-        }
+        tkm_flash_render();
     }
 
     public static function get_type($type)
     {
         switch ($type) {
             case self::SUCCESS:
-                return 'notice-success';
+                return 'success';
             case self::ERROR:
-                return 'notice-error';
+                return 'danger';
             case self::WARNING:
-                return 'notice-warning';
-            case self::INFO:
-                return 'notice-info';
+                return 'warning';
             default:
-                return 'notice-info';
+                return 'info';
         }
     }
 
     public static function empty_session()
     {
-        unset($_SESSION['tkm']['messages']);
+        delete_transient('tkm_flash_' . get_current_user_id());
     }
 }

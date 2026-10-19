@@ -6,7 +6,11 @@ class TKM_Ticket_Url{
 
     public static function all(){
 
-     return  wc_get_endpoint_url('tickets' , '' , get_permalink(get_option('woocommerce_myaccount_page_id')));
+        if (!function_exists('wc_get_endpoint_url')) {
+            return TKM_Shortcode_Url::base();
+        }
+
+        return wc_get_endpoint_url('tickets', '', get_permalink(get_option('woocommerce_myaccount_page_id')));
 
     }
 

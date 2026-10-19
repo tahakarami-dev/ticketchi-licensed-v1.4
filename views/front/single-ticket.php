@@ -1,201 +1,167 @@
 <?php
+defined('ABSPATH') || exit('NO Access');
 
-$ticket_id = $_GET['ticket-id'];
-$ticket_manager = new TKM_Ticket_Manager();
-$ticket = $ticket_manager->get_info_ticket($ticket_id);
-
-$user_data = get_userdata($ticket->creator_id);
-$department_manager = new  TKM_Front_Department_Manager();
-
-$reply_manager = new TKM_Reply_Manager($ticket_id);
-$replies = $reply_manager->get_replys();
-
-$product_id = $ticket->product ? $ticket->product : NULL;
-$product_info = get_product_name_and_link_by_id($product_id);
-
-if (tkm_settings('edd_setting') == true) {
-  $edd_product_id = $ticket->edd_product ? $ticket->edd_product : NULL;
-  $edd_product_info = get_the_title($edd_product_id);
+if (!is_user_logged_in()) {
+    include TKM_VIEWS_PATH . 'front/partials/login-required.php';
+    return;
 }
 
-$ticket_id = isset($_GET['ticket-id']) ? intval($_GET['ticket-id']) : 0;
-$rating = $ticket_manager->get_ticket_rating($ticket_id);
+$ticket_id      = isset($_GET['ticket-id']) ? absint($_GET['ticket-id']) : 0;
+$ticket_manager = new TKM_Ticket_Manager();
+$ticket         = $ticket_id ? $ticket_manager->get_info_ticket($ticket_id) : null;
 
-$content = '';
-$editor_id = 'body';
-$settings = array(
-  'textarea_name' => 'my_custom_content',
-  'media_buttons' => false,
-  'editor_height' => 150,
-  'tinymce' => array(
-    'toolbar1' => 'bold,italic,underline,|,link,unlink,|,undo,redo',
-    'block_formats' => 'Paragraph=p; Heading 2=h2; Heading 3=h3',
-    'valid_elements' => '*[*]',
-    'plugins' => 'link',
-  ),
-  'quicktags' => true,
-);
-
-$is_shortcode = tkm_settings('shortcode');
-?>
-<?php if (is_user_logged_in()): ?>
-  <div class="tkm-shortcode-wrapper">
-    <div class="main_single_ticket">
-      <div class="tkm_right_single">
-        <h2 style="font-weight: 700 !important;" class="tkm_title_ticket"><?php echo $ticket->title ?></h2>
-        </p>
-        <div class="response-item-chat">
-          <span class="body_ticket_text"><?php echo wp_kses_post($ticket->body) ?></span>
-          <?php $ticket_files = tkm_get_files($ticket->file); ?>
-          <?php if (!empty($ticket_files)): ?>
-            <div class="file_box_ticket tkm-files-list">
-              <?php foreach ($ticket_files as $ticket_file): ?>
-                <a class="link_file_ticket" href="<?php echo esc_url($ticket_file) ?>" download="<?php echo esc_attr($ticket_file) ?>"> فایل پیوست: <?php echo esc_html(tkm_get_file_name($ticket_file)) ?></a>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
-          <?php if ($ticket->voice) : ?>
-            <div class="voice_reply">
-              <audio class="voice_ticket" controls>
-                <source src="<?php echo $ticket->voice  ?>" type="audio/wav">
-              </audio>
-            </div>
-          <?php endif; ?>
-          <p style="font-size: 14px;" class="timestamp"><?php echo wp_date( get_option('date_format') . ' ' . get_option('time_format'), strtotime($ticket->create_date) );?></p>
+if (!$ticket || !tkm_user_can_access_ticket($ticket)) : ?>
+    <div class="tkm-ui tkm-app">
+        <div class="tkm-card tkm-empty">
+            <div class="tkm-empty__art"><?php echo tkm_icon('search', 30); ?></div>
+            <h3 class="tkm-empty__title">تیکت پیدا نشد</h3>
+            <p class="tkm-empty__text">این تیکت وجود ندارد یا شما به آن دسترسی ندارید.</p>
+            <a class="tkm-btn tkm-btn--primary" href="<?php echo esc_url(tkm_url('list')); ?>"><?php echo tkm_icon('arrow-right', 16); ?> بازگشت به تیکت‌ها</a>
         </div>
-        <?php include TKM_VIEWS_PATH . 'front/reply.php' ?>
-        <div class="btn_reply_box">
-          <a class="byn_send_reply"> پاسخ به تیکت
-            <img width="18px" style="height: 18px;" src="<?php echo TKM_FRONT_ASSETS . '/images/plus.png' ?>" alt="">
-          </a>
-        </div>
-        <div class="tkm_item_send_form">
-          <form id="reply-submit" action="#" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="ticket_id" value="<?php echo $ticket->ID ?>" id="ticket_id">
-            <?php wp_editor($content, $editor_id, $settings); ?>
-            <div class="item_close">
-            </div>
-            <div class="reply-attachment">
-              <label for="file-upload" class="attachment-file" style="margin: 0;">
-                <?php echo  tkm_settings('file_label') ?  tkm_settings('file_label') : 'آپلود فایل '   ?>
-                <img width="18px" style="height: 18px;" src="<?php echo TKM_FRONT_ASSETS . '/images/upload.png' ?>" alt="">
-              </label>
-              <input id="file-upload" class="upload_btn_file" type="file" <?php echo tkm_settings('upload_multiple') ? 'multiple' : '' ?> accept="<?php echo esc_attr(tkm_get_accept_attr()) ?>" />
-              <div class="tkm-selected-files" id="reply-selected-files"></div>
-
-              <button type="button" id="openPopup" class="attachment-file"> <?php echo  tkm_settings('voice_label') ?  tkm_settings('voice_label') : 'ارسال صدا ' ?>
-                <img width="18px" style="height: 18px;" src="<?php echo TKM_FRONT_ASSETS . '/images/microphone.png' ?>" alt="">
-              </button>
-            </div>
-            <br>
-            <div id="popup">
-              <h2 class="popup-title">ضبط پیام صوتی</h2>
-              <p>لطفا پس از پایان ضبط بر روی دکمه بستن کلیک کنید</p>
-              <button class="recording-btn" type="button" id="startRecording">شروع</button>
-              <button class="recording-btn" type="button" id="stopRecording" style="display: none;">پایان </button>
-              <button class="recording-btn" type="button" id="deleteRecording" style="display: none;">حذف</button>
-              <br><br>
-              <div id="timerContainer" style="display: none;">
-                <span class="timer" id="timer">00:00</span>
-              </div>
-              <div class="box_audio" style="margin-top: 20px;">
-                <audio id="audioPlayback" controls></audio>
-              </div>
-              <br>
-              <input type="hidden" id="audioData" name="audioData" />
-              <br>
-              <button class="recording-btn" type="button" id="closePopup">بستن</button>
-            </div>
-            <div class="cloes-item">
-              <label class="" for="status">بستن تیکت</label>
-              <input class="cloes-checkbox" type="checkbox" name="status" id="status" value="closed">
-            </div>
-
-            <button class="submit-reply" type="submit">ارسال پاسخ <span class="loader" style="display: none;"> در حال ارسال </span>
-              <img width="18px" style="height: 18px;" src="<?php echo TKM_FRONT_ASSETS . '/images/send.png' ?>" alt="">
-            </button>
-        </div>
-      </div>
-
-      <div class="items_left" style="font-size: 16px;">
-        <div class="back_box back_link" style="display: flex; justify-content:left">
-          <a class="back-link" href="<?php echo $is_shortcode ? TKM_Shortcode_Url::base() : TKM_Ticket_Url::all() ?>">بازگشت
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-            </svg>
-          </a>
-
-          </form>
-        </div>
-        <div class="tkm_left_single">
-          <?php $show_department = $department_manager->get_department($ticket->department_id)  ?>
-          <p class="ability_ticket">نام دپارتمان: <span> <?php echo $show_department->name ?></span></p>
-          <p class="ability_ticket"> شناسه تیکت: <span><?php echo $ticket->ID ?> </span></p>
-          <?php if (tkm_settings('product_setting')  && isset($ticket->product)): ?>
-            <p class="ability_ticket"> محصول : <span><?php echo  esc_html($product_info['name']) ?> </span></p>
-          <?php endif; ?>
-
-          <?php if (tkm_settings('edd_setting')): ?>
-            <p class="ability_ticket"> محصول دیجیتال : <span><?php echo  esc_html($edd_product_info) ?> </span></p>
-          <?php endif; ?>
-          <p class="ability_ticket"><span> <?php echo get_status_html($ticket->status) ?></span></p>
-          <p class="ability_ticket" id="priority_ability">اولویت تیکت:<span>
-              <?php
-              switch ($ticket->priority) {
-                case 'low':
-                  echo 'کم';
-                  break;
-
-                case 'medium':
-                  echo 'متوسط ';
-                  break;
-
-                case 'high':
-                  echo 'زیاد';
-                  break;
-              }
-              ?>
-            </span></p>
-          <p class="ability_ticket">کاربر:‌ <span><?php echo $user_data->display_name ?></span></p>
-          <p class="ability_ticket">تاریخ ایجاد: <span><?php echo wp_date( get_option('date_format') . ' ' . get_option('time_format'), strtotime($ticket->create_date) ); ?> </span></p>
-          <p>تاریخ بروزرسانی: <span><?php  echo wp_date( get_option('date_format') . ' ' . get_option('time_format'), strtotime($ticket->reply_date) ); ?></span></p>
-        </div>
-        <?php if (tkm_settings('rating_ticket')): ?>
-          <?php if ($ticket_id > 0): ?>
-            <?php if ($ticket_manager->has_user_rated_ticket($ticket_id)) : ?>
-
-              <div class="tkm-rating-form">
-                <?php if (tkm_settings('rating_ticket_img')): ?>
-
-                <?Php endif ?>
-                <p>امتیاز شما به این تیکت</p>
-                <div id="rating-container" data-rating="<?php echo esc_attr($rating); ?>">
-                  <span class="star" data-value="5">&#9733;</span>
-                  <span class="star" data-value="4">&#9733;</span>
-                  <span class="star" data-value="3">&#9733;</span>
-                  <span class="star" data-value="2">&#9733;</span>
-                  <span class="star" data-value="1">&#9733;</span>
-                </div>
-              </div>
-            <?php else : ?>
-              <div class="tkm-rating-form">
-                <?php if (tkm_settings('rating_ticket_img')): ?>
-
-                <?Php endif ?> <p class="title_rating"><?php echo tkm_settings('rating_ticket_title') ?></p>
-                <div class="tkm-stars" data-rating="0">
-                  <span class="star" data-value="1">&#9733;</span>
-                  <span class="star" data-value="2">&#9733;</span>
-                  <span class="star" data-value="3">&#9733;</span>
-                  <span class="star" data-value="4">&#9733;</span>
-                  <span class="star" data-value="5">&#9733;</span>
-                </div>
-                <button id="tkm-submit-rating" class="tkm-submit-button">ثبت امتیاز</button>
-              </div>
-            <?php endif; ?>
-          <?php endif; ?>
-        <?php endif; ?>
-
-      </div>
     </div>
-  </div>
-<?php endif; ?>
+<?php
+    return;
+endif;
+
+$department_manager = new TKM_Front_Department_Manager();
+$department         = $department_manager->get_department($ticket->department_id);
+$parent_department  = ($department && $department->parent) ? $department_manager->get_department($department->parent) : null;
+
+$replies = (new TKM_Reply_Manager($ticket_id))->get_replys();
+
+$product_info = (tkm_settings('product_setting') && $ticket->product) ? get_product_name_and_link_by_id($ticket->product) : null;
+$edd_title    = (tkm_settings('edd_setting') && $ticket->edd_product) ? get_the_title($ticket->edd_product) : '';
+
+$can_rate   = tkm_settings('rating_ticket') && (int) $ticket->creator_id === get_current_user_id();
+$has_rated  = $can_rate && $ticket_manager->has_user_rated_ticket($ticket_id);
+$rating     = $has_rated ? $ticket_manager->get_ticket_rating($ticket_id) : 0;
+$is_final   = $ticket->status === 'finish';
+$is_closed  = $ticket->status === 'closed';
+$opener_is_support = (int) $ticket->from_admin === 1;
+
+$tkm_tools_id = 'tkm-reply';
+?>
+<div class="tkm-ui tkm-app" data-view="single">
+
+    <header class="tkm-pagehead tkm-pagehead--ticket">
+        <a class="tkm-back" href="<?php echo esc_url(tkm_url('list')); ?>"><?php echo tkm_icon('arrow-right', 16); ?> همه تیکت‌ها</a>
+        <div class="tkm-pagehead__row">
+            <h2 class="tkm-pagehead__title"><?php echo esc_html($ticket->title); ?></h2>
+            <span data-status-badge><?php echo tkm_status_badge($ticket->status); ?></span>
+        </div>
+        <div class="tkm-pagehead__meta">
+            <span class="tkm-num"><?php echo tkm_icon('hash', 14); ?><?php echo esc_html(tkm_fa($ticket->ID)); ?></span>
+            <span><?php echo tkm_icon('building', 14); ?><?php echo esc_html($department ? $department->name : '—'); ?></span>
+            <span><?php echo tkm_icon('calendar', 14); ?><?php echo esc_html(tkm_date($ticket->create_date, false)); ?></span>
+            <?php echo tkm_priority_badge($ticket->priority); ?>
+        </div>
+    </header>
+
+    <div class="tkm-single">
+        <div class="tkm-single__main">
+            <section class="tkm-thread" aria-label="گفتگو">
+                <?php
+                $tkm_msg_author  = (int) $ticket->creator_id;
+                $tkm_msg_body    = $ticket->body;
+                $tkm_msg_date    = $ticket->create_date;
+                $tkm_msg_files   = tkm_files_html($ticket->file);
+                $tkm_msg_voice   = tkm_voice_html($ticket->voice);
+                $tkm_msg_support = $opener_is_support;
+                $tkm_msg_bot     = false;
+                include TKM_VIEWS_PATH . 'front/partials/message.php';
+                ?>
+                <div class="tkm-thread__divider"><span><?php echo esc_html(count($replies) ? tkm_fa(count($replies)) . ' پاسخ' : 'پاسخ‌ها'); ?></span></div>
+                <div class="tkm-thread__replies" data-replies>
+                    <?php include TKM_VIEWS_PATH . 'front/reply.php'; ?>
+                </div>
+            </section>
+
+            <?php if ($is_final) : ?>
+                <div class="tkm-alert tkm-alert--success">
+                    <?php echo tkm_icon('check-circle', 18); ?>
+                    <div>این تیکت پایان یافته است. اگر سوال دیگری دارید، یک <a class="tkm-link" href="<?php echo esc_url(tkm_url('new')); ?>">تیکت جدید</a> ثبت کنید.</div>
+                </div>
+            <?php else : ?>
+                <form id="reply-submit" class="tkm-card tkm-composer" method="post" enctype="multipart/form-data" novalidate>
+                    <input type="hidden" name="ticket_id" value="<?php echo esc_attr($ticket->ID); ?>" id="ticket_id">
+                    <?php if ($is_closed) : ?>
+                        <div class="tkm-composer__note"><?php echo tkm_icon('info', 16); ?> این تیکت بسته شده است؛ با ارسال پاسخ، دوباره باز می‌شود.</div>
+                    <?php endif; ?>
+                    <div class="tkm-composer__box">
+                        <?php echo tkm_avatar(get_current_user_id()); ?>
+                        <label class="tkm-sr" for="body">متن پاسخ</label>
+                        <textarea class="tkm-composer__input" id="body" name="body" rows="3" placeholder="پاسخ خود را بنویسید…" data-autogrow></textarea>
+                    </div>
+                    <?php include TKM_VIEWS_PATH . 'front/partials/composer-tools.php'; ?>
+                    <div class="tkm-composer__foot">
+                        <label class="tkm-switch">
+                            <input type="checkbox" name="status" id="status" value="closed">
+                            <span class="tkm-switch__track"></span>
+                            مشکلم حل شد، تیکت بسته شود
+                        </label>
+                        <button class="tkm-btn tkm-btn--primary" type="submit" data-submit>
+                            <span class="tkm-spinner"></span>
+                            <span class="tkm-btn__icon"><?php echo tkm_icon('send', 16); ?></span>
+                            ارسال پاسخ
+                        </button>
+                    </div>
+                </form>
+            <?php endif; ?>
+        </div>
+
+        <aside class="tkm-single__side">
+            <section class="tkm-card">
+                <div class="tkm-card__head"><div class="tkm-card__title"><?php echo tkm_icon('info', 18); ?> جزئیات تیکت</div></div>
+                <dl class="tkm-kv">
+                    <div><dt>شناسه</dt><dd class="tkm-num"><?php echo esc_html(tkm_ticket_number($ticket->ID)); ?></dd></div>
+                    <div><dt>وضعیت</dt><dd data-status-badge><?php echo tkm_status_badge($ticket->status); ?></dd></div>
+                    <div><dt>اولویت</dt><dd><?php echo tkm_priority_badge($ticket->priority); ?></dd></div>
+                    <div><dt>دپارتمان</dt><dd><?php echo esc_html(($parent_department ? $parent_department->name . ' / ' : '') . ($department ? $department->name : '—')); ?></dd></div>
+                    <?php if ($product_info) : ?>
+                        <div><dt>محصول</dt><dd><?php if ($product_info['link']) : ?><a class="tkm-link" href="<?php echo esc_url($product_info['link']); ?>" target="_blank" rel="noopener"><?php echo esc_html($product_info['name']); ?></a><?php else : echo esc_html($product_info['name']); endif; ?></dd></div>
+                    <?php endif; ?>
+                    <?php if ($edd_title) : ?>
+                        <div><dt>محصول دیجیتال</dt><dd><?php echo esc_html($edd_title); ?></dd></div>
+                    <?php endif; ?>
+                    <div><dt>ایجاد کننده</dt><dd class="tkm-row tkm-kv__user"><?php echo tkm_avatar($ticket->creator_id, 'sm'); ?><?php echo esc_html(tkm_user_name($ticket->creator_id)); ?></dd></div>
+                    <div><dt>تاریخ ایجاد</dt><dd><?php echo esc_html(tkm_date($ticket->create_date)); ?></dd></div>
+                    <div><dt>آخرین بروزرسانی</dt><dd><?php echo esc_html(tkm_date($ticket->reply_date)); ?></dd></div>
+                </dl>
+            </section>
+
+            <?php if ($can_rate) : ?>
+                <section class="tkm-card tkm-rate" data-rating-card>
+                    <div class="tkm-card__body">
+                        <?php if ($has_rated) : ?>
+                            <h4 class="tkm-rate__title">امتیاز شما به این تیکت</h4>
+                            <div class="tkm-stars tkm-stars--static" aria-label="<?php echo esc_attr(tkm_fa($rating) . ' از ۵'); ?>">
+                                <?php for ($i = 1; $i <= 5; $i++) : ?>
+                                    <span class="<?php echo $i <= $rating ? 'is-on' : ''; ?>"><?php echo tkm_icon('star', 22); ?></span>
+                                <?php endfor; ?>
+                            </div>
+                            <p class="tkm-hint">ممنون که به بهبود پشتیبانی کمک کردید.</p>
+                        <?php else : ?>
+                            <h4 class="tkm-rate__title"><?php echo esc_html(tkm_settings('rating_ticket_title') ?: 'لطفا امتیاز تیکت را ثبت نمایید'); ?></h4>
+                            <form class="tkm-rate__form" data-rating-form data-ticket="<?php echo esc_attr($ticket->ID); ?>">
+                                <div class="tkm-stars" role="radiogroup" aria-label="امتیاز">
+                                    <?php for ($i = 5; $i >= 1; $i--) : ?>
+                                        <input type="radio" name="rating" id="tkm-star-<?php echo $i; ?>" value="<?php echo $i; ?>">
+                                        <label for="tkm-star-<?php echo $i; ?>" title="<?php echo esc_attr(tkm_fa($i) . ' ستاره'); ?>"><?php echo tkm_icon('star', 26); ?></label>
+                                    <?php endfor; ?>
+                                </div>
+                                <button type="submit" class="tkm-btn tkm-btn--soft tkm-btn--block" id="tkm-submit-rating" data-submit>
+                                    <span class="tkm-spinner"></span>
+                                    ثبت امتیاز
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
+        </aside>
+    </div>
+
+    <?php if (!$is_final) {
+        include TKM_VIEWS_PATH . 'front/partials/voice-modal.php';
+    } ?>
+</div>

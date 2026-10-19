@@ -12,12 +12,6 @@ function tkm_user_meta_key()
 
 
   return $array;
-
-  $custom_css = tkm_settings('css_costume');
-
-
-  $file = TKM_FRONT_ASSETS . 'css/custom-user-style.css';
-  file_put_contents($file, $custom_css);
 }
 
 if (class_exists('CSF')) {
@@ -93,13 +87,8 @@ if (class_exists('CSF')) {
         'id'      => 'primary_color',
         'type'    => 'color',
         'title'   => 'رنگ اصلی',
+        'desc'    => 'رنگ برند در پنل کاربری و پنل مدیریت (دکمه‌ها، لینک‌ها و حالت فعال).',
         'default' => '#2A48CD',
-        'output' => array(
-          'background-color' => '.new-ticket-btn ,.accordion, #popup,.attachment-file, #tkm-filter-btn,.btn-eye,.btn_show_tickets,.custom-file-upload,.tkm-submit-ticket,.byn_send_reply,.submit-reply,.file_upload_reply,.btn_send_voice',
-          'border-color' => '.ticket:hover , .divider hr',
-          'color' => '.link_file_ticket'
-        ),
-        'output_important' => true,
 
 
       ),
@@ -107,25 +96,15 @@ if (class_exists('CSF')) {
         'id'      => 'secondary_color',
         'type'    => 'color',
         'title'   => 'رنگ ثانویه',
+        'desc'    => 'رنگ حالت هاور دکمه‌های اصلی (اختیاری).',
         'default' => '#2947cc8a',
-
-        'output' => array(
-          'background-color' => 'new-ticket-btn:hover,.body_faq, #tkm-filter-btn:hover, .btn-eye:hover,.new-ticket-btn:hover ,.btn_show_tickets:hover, .custom-file-upload:hover, .tkm-submit-ticket:hover, .byn_send_reply:hover, .submit-reply:hover, .file_upload_reply:hover, .btn_send_voice:hover,.divider hr',
-          'border-color' => '.response-item-chat,.item-reply-ticket,.response-item-chat,',
-          'color' => '.link-title:hover,.back_link:hover'
-        ),
-        'output_important' => true,
       ),
       array(
         'id'      => 'text_color',
         'type'    => 'color',
         'title'   => 'رنگ متن',
+        'desc'    => 'رنگ متن روی دکمه‌ها و سطوح رنگ اصلی.',
         'default' => '#ffffff',
-
-        'output' => array(
-          'color' => '.new-ticket-btn,.accordion,.body_faq ,.attachment-file,#tkm-filter-btn,.btn-eye,.btn_show_tickets,.custom-file-upload,.tkm-submit-ticket,.byn_send_reply,.submit-reply,.file_upload_reply,.btn_send_voice,new-ticket-btn:hover, #tkm-filter-btn:hover, .btn-eye:hover, .btn_show_tickets:hover, .custom-file-upload:hover, .tkm-submit-ticket:hover, .byn_send_reply:hover, .submit-reply:hover, .file_upload_reply:hover, .btn_send_voice:hover',
-        ),
-        'output_important' => true,
       ),
     )
   ));
@@ -438,7 +417,7 @@ if (class_exists('CSF')) {
   CSF::createSection($prefix, array(
     'parent' => 'sms_section',
     'title' => 'ارسال تیکت',
-    'id' => 'sms_section',
+    'id' => 'sms_ticket_section',
     'fields' => array(
 
 
@@ -463,7 +442,6 @@ if (class_exists('CSF')) {
         'default' => false
       ),
       array(
-        'id'      => 'user_create_pattern',
         'type'    => 'content',
         'content' => '<p>شناسه تیکت : {{ticket_id}}</p>' .
           '<p>عنوان تیکت : {{title}}</p>' .

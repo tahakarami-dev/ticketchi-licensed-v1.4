@@ -166,7 +166,7 @@ function get_department_html($department_id)
     $department_manager =  new TKM_Front_Department_Manager();
     $department =  $department_manager->get_department($department_id);
 
-    return '<span?>' . esc_html($department->name) . '</span>';
+    return '<span>' . esc_html($department ? $department->name : '—') . '</span>';
 }
 
 function get_priority_name($priority)
@@ -184,6 +184,8 @@ function get_priority_name($priority)
             return 'زیاد';
             break;
     }
+
+    return '';
 }
 function convert_to_persian_numbers($number)
 {
@@ -204,11 +206,11 @@ function convert_to_persian_numbers($number)
 }
 function format_date($timestamp)
 {
-    jdate($timestamp)->format("Y-m-d H:i");
+    return jdate($timestamp)->format("Y-m-d H:i");
 }
 function get_product_name_and_link_by_id($product_id)
 {
-    $product = wc_get_product($product_id);
+    $product = ($product_id && function_exists('wc_get_product')) ? wc_get_product($product_id) : null;
 
     if (!$product) {
         return [

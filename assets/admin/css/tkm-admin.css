@@ -12,7 +12,7 @@ body.tkm-admin-page .update-nag, body.tkm-admin-page #wpbody-content > .notice, 
 html.tkm-dark body.tkm-admin-page, html.tkm-dark body.tkm-admin-page #wpwrap, html.tkm-dark body.tkm-admin-page #wpcontent { background: #0b0d12; }
 
 .tkm-ui.tkm-admin {
-  min-height: calc(100vh - 32px);
+  min-height: 100vh;
   background: var(--tkm-bg);
   color: var(--tkm-text);
 }
@@ -35,7 +35,7 @@ html.tkm-dark body.tkm-admin-page, html.tkm-dark body.tkm-admin-page #wpwrap, ht
 
 /* ───────── Top bar ───────── */
 .tkm-ui .tkm-topbar {
-  position: sticky; top: 32px; z-index: 50;
+  position: sticky; top: 0; z-index: 50;
   display: flex; align-items: center; gap: 24px;
   height: 64px; padding: 0 32px;
   background: color-mix(in oklab, var(--tkm-surface) 82%, transparent);
@@ -485,8 +485,6 @@ html.tkm-dark body.tkm-admin-page, html.tkm-dark body.tkm-admin-page #wpwrap, ht
   .tkm-ui .tkm-span-2 { grid-column: auto; }
 }
 @media (max-width: 782px) {
-  .tkm-ui .tkm-topbar { top: 46px; }
-  .tkm-ui.tkm-admin { min-height: calc(100vh - 46px); }
   .tkm-ui .tkm-nav__item span:not(.tkm-nav__count) { display: none; }
   .tkm-ui .tkm-kpis { grid-template-columns: 1fr 1fr; gap: 10px; }
   .tkm-ui .tkm-kpi { padding: 16px; }

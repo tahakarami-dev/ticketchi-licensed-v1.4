@@ -94,6 +94,26 @@
 .tkm-ui .tkm-cmdk__ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--tkm-surface-3); color: var(--tkm-text-2); flex: none; }
 .tkm-ui .tkm-cmdk__empty { padding: 32px; text-align: center; color: var(--tkm-text-3); font-size: var(--tkm-fs-sm); }
 
+/* ───────── Standalone shell ───────── */
+.tkm-ui .tkm-exit { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; color: var(--tkm-text-3) !important; border: 1px solid var(--tkm-border); margin-inline-end: -12px; transition: color var(--tkm-dur), border-color var(--tkm-dur), background var(--tkm-dur); }
+.tkm-ui .tkm-exit:hover { color: var(--tkm-text) !important; border-color: var(--tkm-border-strong); background: var(--tkm-surface-2); }
+.tkm-ui .tkm-usermenu { position: relative; }
+.tkm-ui .tkm-usermenu__btn { all: unset; cursor: pointer; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; }
+.tkm-ui .tkm-usermenu__btn:hover .tkm-avatar, .tkm-ui .tkm-usermenu__btn[aria-expanded="true"] .tkm-avatar { box-shadow: 0 0 0 3px var(--tkm-primary-ring); }
+.tkm-ui .tkm-usermenu__btn:focus-visible { outline: 2px solid var(--tkm-primary); outline-offset: 2px; }
+.tkm-ui .tkm-usermenu__panel { top: calc(100% + 8px); left: 0; width: 250px; }
+.tkm-ui .tkm-usermenu__who { display: grid; gap: 2px; padding: 10px 12px 12px; margin-bottom: 4px; border-bottom: 1px solid var(--tkm-border); }
+.tkm-ui .tkm-usermenu__who strong { font-size: var(--tkm-fs-sm); }
+.tkm-ui .tkm-usermenu__who span { font-size: 12px; color: var(--tkm-text-3); overflow: hidden; text-overflow: ellipsis; }
+.tkm-ui .tkm-usermenu__panel a { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border-radius: 9px; font-size: var(--tkm-fs-sm); color: var(--tkm-text-2) !important; }
+.tkm-ui .tkm-usermenu__panel a:hover { background: var(--tkm-surface-2); color: var(--tkm-text) !important; }
+.tkm-ui .tkm-usermenu__panel a.is-danger { color: var(--tkm-danger) !important; }
+body.tkm-admin-page #wpbody-content > .notice:not(.notice-error), body.tkm-admin-page #wpbody-content > .updated, body.tkm-admin-page .update-nag { display: none !important; }
+@media (max-width: 782px) {
+  .tkm-ui .tkm-exit { display: none; }
+  .tkm-ui .tkm-topbar__actions .tkm-btn--primary { display: none; }
+}
+
 /* ───────── App pages: full-bleed ───────── */
 .tkm-ui.tkm-admin--app .tkm-main { max-width: none; padding: 0; gap: 0; }
 .tkm-ui.tkm-admin--app .tkm-flashes:not(:empty) { padding: 12px 20px 0; }
@@ -102,7 +122,7 @@
 .tkm-ui .tkm-inbox {
   --nav-w: 236px; --list-w: 380px; --side-w: 320px;
   display: grid; grid-template-columns: var(--nav-w) var(--list-w) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
-  height: calc(100vh - 32px - 64px); min-height: 520px; overflow: hidden;
+  height: calc(100vh - 64px); height: calc(100dvh - 64px); min-height: 480px; overflow: hidden;
   background: var(--tkm-surface);
 }
 
@@ -363,7 +383,7 @@
   .tkm-ui .tkm-hide-md { display: none; }
 }
 @media (max-width: 860px) {
-  .tkm-ui .tkm-inbox { grid-template-columns: minmax(0, 1fr); height: calc(100vh - 46px - 64px); }
+  .tkm-ui .tkm-inbox { grid-template-columns: minmax(0, 1fr); height: calc(100dvh - 64px); }
   .tkm-ui .tkm-ib-list { border: 0; }
   .tkm-ui .tkm-ib-convo { display: none; }
   .tkm-ui .tkm-inbox.is-reading .tkm-ib-list { display: none; }

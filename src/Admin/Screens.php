@@ -20,6 +20,25 @@ final class Screens
     {
         add_action('admin_init', [__CLASS__, 'legacy_redirects']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'assets'], 20);
+        add_action('admin_head', [__CLASS__, 'fullscreen'], 1);
+        add_action('admin_menu', [__CLASS__, 'menu_icon_css']);
+    }
+
+    /** Ticketchi screens run as a standalone app: no wp-admin sidebar or toolbar. */
+    public static function fullscreen()
+    {
+        if (!\TKM_ASSETS::is_plugin_admin_page()) {
+            return;
+        }
+        echo '<style id="tkm-fullscreen">html.wp-toolbar{padding-top:0!important}#wpadminbar,#adminmenumain,#screen-meta,#screen-meta-links,#wpfooter{display:none!important}#wpcontent,#wpfooter{margin-left:0!important;margin-right:0!important}#wpbody-content{float:none!important}#wpbody{padding-top:0!important}.auto-fold #wpcontent{margin:0!important}</style>';
+    }
+
+    /** Keep the sidebar icon crisp at every admin colour scheme. */
+    public static function menu_icon_css()
+    {
+        add_action('admin_head', function () {
+            echo '<style>#adminmenu .tkm-menu-entry .wp-menu-image{background-size:20px auto!important}#adminmenu .tkm-menu-entry .wp-submenu{display:none!important}</style>';
+        });
     }
 
     public static function current()

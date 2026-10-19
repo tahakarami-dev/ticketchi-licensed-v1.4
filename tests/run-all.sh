@@ -28,7 +28,7 @@ $WP_CLI wc tool run install_pages --user=admin >/dev/null 2>&1
 $WP_CLI option update woocommerce_coming_soon no >/dev/null 2>&1
 $WP_CLI rewrite flush >/dev/null 2>&1
 tables=$($WP_CLI eval 'global $wpdb; echo count($wpdb->get_col("SELECT name FROM sqlite_master WHERE name LIKE \"%tkm_%\" AND type=\"table\""));' 2>/dev/null)
-[ "$tables" = "5" ] && echo "activation created 5 tables" || { echo "expected 5 tables, got $tables"; status=1; }
+[ "$tables" = "10" ] && echo "activation created 10 tables" || { echo "expected 10 tables, got $tables"; status=1; }
 
 if curl -s -o /dev/null "http://localhost:$PORT/"; then
   echo "port $PORT is already in use — stop the other server first"; exit 1

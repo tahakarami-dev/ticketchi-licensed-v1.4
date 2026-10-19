@@ -7,7 +7,7 @@
 global $wpdb;
 $p = $wpdb->prefix;
 
-foreach (['tkm_tickets', 'tkm_replies', 'tkm_departments', 'tkm_users', 'tkm_ratings'] as $t) {
+foreach (['tkm_tickets', 'tkm_replies', 'tkm_departments', 'tkm_users', 'tkm_ratings', 'tkm_tags', 'tkm_ticket_tags', 'tkm_activity', 'tkm_notifications', 'tkm_automations'] as $t) {
     $wpdb->query("DELETE FROM {$p}{$t}");
 }
 
@@ -34,6 +34,8 @@ $ali      = tkm_seed_user('ali', 'علی رضایی', 'customer');
 $maryam   = tkm_seed_user('maryam', 'مریم احمدی', 'customer');
 $reza     = tkm_seed_user('reza', 'رضا محمدی', 'customer');
 $sara     = tkm_seed_user('sara', 'سارا کریمی', 'editor');
+// Support agent with the plugin role and no department: sees only tickets assigned to them.
+$nima     = tkm_seed_user('nima', 'نیما صادقی', 'tkm_agent');
 $customers = [$ali, $maryam, $reza];
 
 $departments = [
@@ -100,6 +102,8 @@ foreach ($titles as $i => $title) {
         'create_date'   => $created,
         'reply_date'    => $reply,
         'note'          => $i % 4 === 0 ? 'مشتری VIP — پیگیری فوری' : null,
+        'updated_at'    => $reply,
+        'assignee_id'   => $i === 1 ? $nima : ($i % 5 === 0 ? $sara : null),
     ]);
     $ticket_id = $wpdb->insert_id;
 
@@ -118,6 +122,30 @@ foreach ($titles as $i => $title) {
     if (in_array($statuses[$i % count($statuses)], ['closed', 'finish', 'answerd'], true) && $i % 2 === 0) {
         $wpdb->insert("{$p}tkm_ratings", ['ticket_id' => $ticket_id, 'user_id' => $creator, 'rating' => rand(3, 5)]);
     }
+}
+
+// v2: tags, an automation rule and a couple of help articles.
+$vip = \Ticketchi\Domain\Tags::find_or_create('VIP', '#8b5cf6');
+$bug = \Ticketchi\Domain\Tags::find_or_create('باگ', '#ef4444');
+\Ticketchi\Domain\Tags::add((int) $wpdb->get_var("SELECT MIN(ID) FROM {$p}tkm_tickets"), $vip);
+\Ticketchi\Automation\Engine::save([
+    'name'       => 'کلیدواژه فوری',
+    'trigger'    => 'ticket_created',
+    'conditions' => [['field' => 'keyword', 'value' => 'فوری']],
+    'actions'    => [['type' => 'priority', 'value' => 'high'], ['type' => 'tag', 'value' => $bug]],
+    'is_active'  => true,
+]);
+foreach (get_posts(['post_type' => 'tkm_article', 'numberposts' => -1, 'post_status' => 'any']) as $old) {
+    wp_delete_post($old->ID, true);
+}
+foreach ([
+    ['فعال‌سازی لایسنس افزونه', 'برای فعال‌سازی لایسنس، کد را از پنل کاربری کپی کرده و در تنظیمات افزونه وارد کنید.'],
+    ['رفع خطای ۵۰۰ بعد از نصب', 'خطای ۵۰۰ معمولاً به دلیل نسخه PHP یا تداخل افزونه‌هاست.'],
+] as $article) {
+    wp_insert_post(['post_type' => 'tkm_article', 'post_status' => 'publish', 'post_title' => $article[0], 'post_content' => $article[1]]);
+}
+if (!get_page_by_path('help-center')) {
+    wp_insert_post(['post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'مرکز راهنما', 'post_name' => 'help-center', 'post_content' => '[ticketchi_kb]']);
 }
 
 $settings = get_option('tkm_settings', []);
@@ -151,4 +179,4 @@ if (!get_page_by_path('support')) {
     wp_insert_post(['post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'پشتیبانی', 'post_name' => 'support', 'post_content' => '[tickets]']);
 }
 
-echo "Seeded: " . count($titles) . " tickets, users ali/maryam/reza/sara (password = login)\n";
+echo "Seeded: " . count($titles) . " tickets, users ali/maryam/reza/sara/nima (password = login)\n";

@@ -33,7 +33,7 @@ class TKM_MENU extends BASE_MENU
                 'page_title' => 'تنظیمات',
                 'menu_title' => 'تنظیمات',
                 'menu_slug' => 'tkm-settings',
-                'callback' => '',
+                'callback' => 'settings_page',
                 'load' => [
                     'status' => false,
                 ]
@@ -148,8 +148,9 @@ class TKM_MENU extends BASE_MENU
 
     public function page()
     {
-        // The top-level slug is shared with the Codestar settings screen, which renders itself.
+        // The top-level slug is the settings screen.
         if (isset($_GET['page']) && trim(wp_unslash($_GET['page'])) === 'tkm-settings') {
+            $this->settings_page();
             return;
         }
         $this->tkm_analysis();
@@ -170,6 +171,21 @@ class TKM_MENU extends BASE_MENU
         include TKM_VIEWS_PATH . 'admin/partials/header.php';
         \Ticketchi\Admin\Screens::deny();
         include TKM_VIEWS_PATH . 'admin/partials/footer.php';
+    }
+
+    public function settings_page()
+    {
+        // Both the top-level and the submenu registration may fire for this slug.
+        static $rendered = false;
+        if ($rendered) {
+            return;
+        }
+        $rendered = true;
+        if (!current_user_can('tkm_manage')) {
+            $this->tkm_render_denied();
+            return;
+        }
+        include TKM_VIEWS_PATH . 'admin/settings/app.php';
     }
 
     public function reports_page()

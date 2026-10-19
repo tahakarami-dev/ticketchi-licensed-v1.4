@@ -406,60 +406,6 @@ html.tkm-dark body.tkm-admin-page, html.tkm-dark body.tkm-admin-page #wpwrap, ht
 .tkm-dark .tkm-select2-dropdown.select2-dropdown { background: #161a23; border-color: #313a4c; color: #eef1f6; }
 .tkm-dark .tkm-select2-dropdown .select2-search--dropdown .select2-search__field { background: #12151c; border-color: #313a4c; color: #eef1f6; }
 
-/* ───────── Settings (Codestar) skin ───────── */
-.tkm-ui .tkm-settings .csf { margin: 0; font-family: var(--tkm-font); }
-.tkm-ui .tkm-settings .csf-container { padding: 0; border: 0; background: transparent; box-shadow: none; }
-.tkm-ui .tkm-settings .csf-options, .tkm-ui .tkm-settings form#csf-form { background: transparent; border: 0; box-shadow: none; }
-.tkm-ui .tkm-settings .csf-header { display: none; }
-.tkm-ui .tkm-settings .csf-wrapper { position: relative; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; background: transparent; }
-.tkm-ui .tkm-settings .csf-nav-background { display: none; }
-.tkm-ui .tkm-settings .csf-nav { position: sticky; top: 112px; float: none; width: auto; padding: 8px; background: var(--tkm-surface); border: 1px solid var(--tkm-border); border-radius: var(--tkm-r-lg); box-shadow: var(--tkm-shadow-xs); }
-.tkm-ui .tkm-settings .csf-nav ul { margin: 0; padding: 0; background: transparent; }
-.tkm-ui .tkm-settings .csf-nav ul li { margin: 0; }
-.tkm-ui .tkm-settings .csf-nav ul li a {
-  display: flex; align-items: center; gap: 8px; padding: 10px 12px; margin: 2px 0; border-radius: 10px; border: 0;
-  background: transparent; color: var(--tkm-text-2); font-weight: 600; font-size: var(--tkm-fs-sm); text-align: right; position: relative;
-}
-.tkm-ui .tkm-settings .csf-nav ul li a:hover { background: var(--tkm-surface-3); color: var(--tkm-text); }
-.tkm-ui .tkm-settings .csf-nav ul li .csf-active, .tkm-ui .tkm-settings .csf-nav ul li a.csf-active { background: var(--tkm-primary-soft); color: var(--tkm-primary); }
-.tkm-ui .tkm-settings .csf-nav ul li .csf-active::after, .tkm-ui .tkm-settings .csf-nav .csf-arrow::after { display: none; }
-.tkm-ui .tkm-settings .csf-nav ul ul { padding-inline-start: 12px; background: transparent; }
-.tkm-ui .tkm-settings .csf-nav ul ul li a { font-size: var(--tkm-fs-xs); padding: 8px 12px; background: transparent; border: 0; }
-.tkm-ui .tkm-settings .csf-content { margin: 0; background: var(--tkm-surface); border: 1px solid var(--tkm-border); border-radius: var(--tkm-r-lg); box-shadow: var(--tkm-shadow-xs); overflow: hidden; }
-.tkm-ui .tkm-settings .csf-section-title { padding: 18px 24px; background: var(--tkm-surface); border-bottom: 1px solid var(--tkm-border); }
-.tkm-ui .tkm-settings .csf-section-title h3 { margin: 0; font-size: var(--tkm-fs-lg); font-weight: 800; color: var(--tkm-text); }
-.tkm-ui .tkm-settings .csf-field { padding: 22px 24px; border-color: var(--tkm-border) !important; color: var(--tkm-text); }
-.tkm-ui .tkm-settings .csf-field + .csf-field { border-top: 1px solid var(--tkm-border); }
-.tkm-ui .tkm-settings .csf-field .csf-title { float: right; width: 30%; padding-left: 20px; }
-.tkm-ui .tkm-settings .csf-field .csf-fieldset { float: left; width: 70%; }
-.tkm-ui .tkm-settings .csf-field .csf-title h4 { margin: 0; color: var(--tkm-text); font-size: var(--tkm-fs); font-weight: 700; }
-.tkm-ui .tkm-settings .csf-field .csf-subtitle-text, .tkm-ui .tkm-settings .csf-desc-text, .tkm-ui .tkm-settings .csf-text-desc, .tkm-ui .tkm-settings .csf-help { color: var(--tkm-text-3); font-size: var(--tkm-fs-xs); }
-.tkm-ui .tkm-settings .csf-field-subheading { background: var(--tkm-surface-2); color: var(--tkm-text-2); font-weight: 600; font-size: var(--tkm-fs-sm); }
-.tkm-ui .tkm-settings .csf-field-content h3 { font-size: var(--tkm-fs-md); }
-.tkm-ui .tkm-settings input[type="text"], .tkm-ui .tkm-settings input[type="number"], .tkm-ui .tkm-settings input[type="email"], .tkm-ui .tkm-settings input[type="url"], .tkm-ui .tkm-settings textarea, .tkm-ui .tkm-settings select {
-  width: 100%; max-width: 560px; min-height: 42px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--tkm-border-strong);
-  background-color: var(--tkm-surface); color: var(--tkm-text); font-family: var(--tkm-font); font-size: var(--tkm-fs); box-shadow: var(--tkm-shadow-xs);
-}
-.tkm-ui .tkm-settings input[type="number"] { max-width: 160px; }
-.tkm-ui .tkm-settings textarea { min-height: 110px; line-height: 1.7; }
-.tkm-ui .tkm-settings input:focus, .tkm-ui .tkm-settings textarea:focus, .tkm-ui .tkm-settings select:focus { border-color: var(--tkm-primary); box-shadow: 0 0 0 4px var(--tkm-primary-ring); outline: none; }
-.tkm-ui .tkm-settings .csf--switcher { border-radius: 99px; background: var(--tkm-border-strong); box-shadow: none; }
-.tkm-ui .tkm-settings .csf--switcher.csf--active { background: var(--tkm-primary); }
-.tkm-ui .tkm-settings .csf--switcher .csf--ball { border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
-.tkm-ui .tkm-settings .csf--switcher span { font-family: var(--tkm-font); }
-.tkm-ui .tkm-settings .csf-field-switcher .csf--label { color: var(--tkm-text-2); font-size: var(--tkm-fs-sm); }
-.tkm-ui .tkm-settings .csf-repeater-item, .tkm-ui .tkm-settings .csf-cloneable-item { border-radius: 12px; border: 1px solid var(--tkm-border); overflow: hidden; margin-bottom: 8px; background: var(--tkm-surface); }
-.tkm-ui .tkm-settings .csf-repeater-helper, .tkm-ui .tkm-settings .csf-cloneable-helper { background: var(--tkm-surface-2); border-color: var(--tkm-border); }
-.tkm-ui .tkm-settings .csf-repeater-content, .tkm-ui .tkm-settings .csf-cloneable-content { border-color: var(--tkm-border); }
-.tkm-ui .tkm-settings .button { border-radius: 10px; min-height: 36px; padding: 0 14px; font-family: var(--tkm-font); font-weight: 600; border-color: var(--tkm-border-strong); background: var(--tkm-surface); color: var(--tkm-text); }
-.tkm-ui .tkm-settings .button-primary, .tkm-ui .tkm-settings .csf-save { background: var(--tkm-primary) !important; border-color: var(--tkm-primary) !important; color: var(--tkm-on-primary) !important; box-shadow: 0 6px 16px -8px var(--tkm-primary) !important; text-shadow: none; }
-.tkm-ui .tkm-settings .csf-footer { position: sticky; bottom: 12px; z-index: 5; display: flex; justify-content: flex-start; gap: 10px; margin-top: 16px; padding: 12px 16px; border-radius: var(--tkm-r-lg); background: color-mix(in oklab, var(--tkm-surface) 88%, transparent); backdrop-filter: blur(10px); border: 1px solid var(--tkm-border); box-shadow: var(--tkm-shadow); text-align: right; }
-.tkm-ui .tkm-settings .csf-footer .csf-buttons { float: none; display: flex; gap: 8px; }
-.tkm-ui .tkm-settings .csf-form-result { border-radius: 8px; font-family: var(--tkm-font); }
-.tkm-ui .tkm-settings .wp-picker-container .wp-color-result.button { min-height: 34px; border-radius: 8px; padding: 0 0 0 34px; }
-.tkm-ui .tkm-settings .csf-field-color .wp-picker-container .wp-color-result-text { border-radius: 8px 0 0 8px; line-height: 32px; }
-.tkm-ui .tkm-settings .clear { clear: both; }
-
 /* ───────── Responsive ───────── */
 @media (max-width: 1280px) {
   .tkm-ui .tkm-grid--dash { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -471,10 +417,6 @@ html.tkm-dark body.tkm-admin-page, html.tkm-dark body.tkm-admin-page #wpwrap, ht
 @media (max-width: 1100px) {
   .tkm-ui .tkm-ws, .tkm-ui .tkm-ws--reverse { grid-template-columns: 1fr; }
   .tkm-ui .tkm-ws__side { position: static; }
-  .tkm-ui .tkm-settings .csf-wrapper { grid-template-columns: 1fr; }
-  .tkm-ui .tkm-settings .csf-nav { position: static; }
-  .tkm-ui .tkm-settings .csf-nav > ul { display: flex; flex-wrap: wrap; gap: 4px; }
-  .tkm-ui .tkm-settings .csf-nav ul ul { display: none !important; }
 }
 @media (max-width: 960px) {
   .tkm-ui .tkm-topbar { gap: 12px; padding: 0 16px; }
@@ -493,8 +435,6 @@ html.tkm-dark body.tkm-admin-page, html.tkm-dark body.tkm-admin-page #wpwrap, ht
   .tkm-ui .tkm-filters > .tkm-select, .tkm-ui .tkm-filters .select2-container { flex: 1 1 100%; }
   .tkm-ui .tkm-wptable .wp-list-table tbody td { padding: 8px 14px; }
   .tkm-ui .tkm-wptable .wp-list-table .column-title { width: auto; }
-  .tkm-ui .tkm-settings .csf-field .csf-title, .tkm-ui .tkm-settings .csf-field .csf-fieldset { float: none; width: 100%; padding: 0; }
-  .tkm-ui .tkm-settings .csf-field .csf-title { margin-bottom: 10px; }
   .tkm-ui .tkm-msg > .tkm-avatar { display: none; }
   .tkm-ui .tkm-rating-summary { grid-template-columns: 1fr; }
   .tkm-ui .tkm-rating-summary__big { border: 0; padding: 0; }

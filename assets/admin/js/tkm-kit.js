@@ -43,6 +43,7 @@
                 if (!res.ok || data === null) {
                     var err = new Error((data && data.message) || (res.status === 403 ? 'دسترسی ندارید یا نشست شما منقضی شده است؛ صفحه را تازه کنید.' : 'ارتباط با سرور برقرار نشد.'));
                     err.status = res.status;
+                    err.fields = (data && data.fields) || [];
                     throw err;
                 }
                 return data;

@@ -83,6 +83,11 @@ final class Api
             ['methods' => 'DELETE', 'callback' => [__CLASS__, 'automation_delete'], 'permission_callback' => $manage, 'args' => $id],
         ]);
 
+        register_rest_route(self::NS, '/settings', [
+            ['methods' => 'GET', 'callback' => [__CLASS__, 'settings'], 'permission_callback' => $manage],
+            ['methods' => 'POST', 'callback' => [__CLASS__, 'settings_save'], 'permission_callback' => $manage],
+        ]);
+
         register_rest_route(self::NS, '/reports', ['methods' => 'GET', 'callback' => [__CLASS__, 'reports'], 'permission_callback' => $manage]);
 
         register_rest_route(self::NS, '/kb/search', ['methods' => 'GET', 'callback' => [__CLASS__, 'kb_search'], 'permission_callback' => '__return_true']);
@@ -452,6 +457,41 @@ final class Api
     {
         Engine::delete((int) $r['id']);
         return self::automations();
+    }
+
+    /* ───────────── Settings ───────────── */
+
+    public static function settings()
+    {
+        $sections = \Ticketchi\Admin\SettingsSchema::sections();
+        foreach ($sections as &$section) {
+            foreach ($section['groups'] as &$group) {
+                foreach ($group['fields'] as &$field) {
+                    if (isset($field['options']) && $field['options'] === 'user_meta') {
+                        $field['options'] = function_exists('tkm_user_meta_key') ? array_values(tkm_user_meta_key()) : [];
+                    }
+                }
+            }
+        }
+        unset($section, $group, $field);
+
+        return [
+            'sections' => $sections,
+            'values'   => \Ticketchi\Admin\SettingsSchema::values(),
+            'defaults' => \Ticketchi\Admin\SettingsSchema::defaults(),
+        ];
+    }
+
+    public static function settings_save(WP_REST_Request $r)
+    {
+        $values = $r->get_json_params();
+        $values = isset($values['values']) && is_array($values['values']) ? $values['values'] : [];
+        $result = \Ticketchi\Admin\SettingsSchema::save($values);
+        if (is_wp_error($result)) {
+            $data = $result->get_error_data();
+            return new WP_REST_Response(['message' => $result->get_error_message(), 'fields' => isset($data['fields']) ? $data['fields'] : []], 400);
+        }
+        return ['values' => $result];
     }
 
     /* ───────────── Reports & KB ───────────── */

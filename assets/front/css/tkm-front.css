@@ -4,7 +4,7 @@
  */
 
 /* ───────── Theme hardening: themes love to restyle bare elements ───────── */
-.tkm-ui.tkm-app { container-type: inline-size; container-name: tkm; max-width: 1180px; margin-inline: auto; display: grid; gap: 20px; font-family: var(--tkm-font) !important; }
+.tkm-ui.tkm-app { container-type: inline-size; container-name: tkm; max-width: 1180px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; font-family: var(--tkm-font) !important; }
 .tkm-ui.tkm-app :where(p, h1, h2, h3, h4, h5, ul, ol, dl, dd, figure, blockquote) { margin: 0; padding: 0; }
 .tkm-ui.tkm-app :is(h1, h2, h3, h4, h5, h6, button, input, select, textarea, label, a, span, p, li, dt, dd, time, strong) { font-family: var(--tkm-font) !important; letter-spacing: normal; text-transform: none; }
 .tkm-ui.tkm-app :where(ul, ol) { list-style: none; }
@@ -50,7 +50,8 @@
 .tkm-ui .tkm-hero__desc { color: var(--tkm-text-2); margin-top: 4px; }
 
 /* ───────── Stats ───────── */
-.tkm-ui .tkm-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.tkm-ui .tkm-stats { display: flex; flex-wrap: wrap; gap: 12px; }
+.tkm-ui .tkm-stats > * { flex: 1 1 140px; min-width: 0; }
 .tkm-ui .tkm-stat {
   --c: var(--tkm-primary);
   position: relative; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center;
@@ -121,7 +122,7 @@
 
 /* ───────── New ticket form ───────── */
 .tkm-ui .tkm-form-card { padding: 8px 0 0; animation: tkm-pop .3s var(--tkm-ease) both; }
-.tkm-ui .tkm-form-section { padding: 22px 26px; display: grid; gap: 18px; }
+.tkm-ui .tkm-form-section { padding: 22px 26px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .tkm-ui .tkm-form-section + .tkm-form-section { border-top: 1px solid var(--tkm-border); }
 .tkm-ui .tkm-form-section__head { display: flex; gap: 14px; align-items: flex-start; }
 .tkm-ui .tkm-form-section__head h3 { font-size: var(--tkm-fs-md); font-weight: 700; }
@@ -132,7 +133,7 @@
 .tkm-ui .tkm-inline-note { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: var(--tkm-r-sm); background: var(--tkm-surface-2); border: 1px dashed var(--tkm-border-strong); color: var(--tkm-text-3); font-size: var(--tkm-fs-sm); }
 
 /* department tiles */
-.tkm-ui .tkm-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.tkm-ui .tkm-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(170px, 100%), 1fr)); gap: 10px; }
 .tkm-ui .tkm-tile { position: relative; cursor: pointer; }
 .tkm-ui .tkm-tile input { position: absolute; opacity: 0; pointer-events: none; }
 .tkm-ui .tkm-tile__box { display: flex; align-items: center; gap: 10px; height: 100%; padding: 14px; border-radius: var(--tkm-r); border: 1.5px solid var(--tkm-border); background: var(--tkm-surface); transition: all var(--tkm-dur) var(--tkm-ease); }
@@ -207,7 +208,7 @@
 .tkm-ui .tkm-prose :is(ul, ol) { padding-inline-start: 1.3em; list-style: revert; }
 .tkm-ui .tkm-prose img { border-radius: var(--tkm-r-sm); height: auto; }
 .tkm-ui .tkm-prose code { background: var(--tkm-surface-3); padding: 2px 6px; border-radius: 6px; font-size: .9em; }
-.tkm-ui .tkm-audio { width: 100%; max-width: 360px; height: 40px; }
+.tkm-ui .tkm-audio { display: block; width: min(300px, 62vw); height: 40px; }
 
 /* composer */
 .tkm-ui .tkm-composer { padding: 16px; display: grid; gap: 14px; }
@@ -248,9 +249,7 @@
   .tkm-ui .tkm-hero { padding: 22px; }
   .tkm-ui .tkm-hero .tkm-btn { width: 100%; }
   .tkm-ui .tkm-hero__title, .tkm-ui .tkm-pagehead__title { font-size: var(--tkm-fs-xl); }
-  .tkm-ui .tkm-stats { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; margin-inline: -2px; scrollbar-width: none; }
-  .tkm-ui .tkm-stats::-webkit-scrollbar { display: none; }
-  .tkm-ui .tkm-stat { flex: 0 0 148px; scroll-snap-align: start; }
+  .tkm-ui .tkm-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .tkm-ui .tkm-toolbar { flex-direction: column; align-items: stretch; }
   .tkm-ui .tkm-toolbar .tkm-segmented { width: 100%; }
   .tkm-ui .tkm-toolbar .tkm-segmented label { flex: 1; }
@@ -263,7 +262,7 @@
   .tkm-ui .tkm-form-section { padding: 18px; }
   .tkm-ui .tkm-form-actions { padding: 16px 18px; }
   .tkm-ui .tkm-form-actions .tkm-btn { width: 100%; }
-  .tkm-ui .tkm-tiles { grid-template-columns: 1fr 1fr; }
+  .tkm-ui .tkm-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tkm-ui .tkm-msg .tkm-avatar { --s: 30px; }
   .tkm-ui .tkm-msg__bubble { padding: 12px 14px; }
   .tkm-ui .tkm-composer__box .tkm-avatar { display: none; }
@@ -282,7 +281,8 @@
 .tkm-ui .tkm-kb-suggest__list span { font-size: var(--tkm-fs-xs); color: var(--tkm-text-3); line-height: 1.8; }
 
 /* ───────── Help center [ticketchi_kb] ───────── */
-.tkm-ui .tkm-kb__hero { text-align: center; padding: 40px 20px 34px; border-radius: var(--tkm-r-lg); background: radial-gradient(120% 140% at 50% 0%, color-mix(in oklab, var(--tkm-primary) 14%, var(--tkm-surface)), var(--tkm-surface) 70%); border: 1px solid var(--tkm-border); display: grid; justify-items: center; gap: 10px; }
+.tkm-ui .tkm-kb__hero { text-align: center; padding: 40px 20px 34px; border-radius: var(--tkm-r-lg); background: radial-gradient(120% 140% at 50% 0%, color-mix(in oklab, var(--tkm-primary) 14%, var(--tkm-surface)), var(--tkm-surface) 70%); border: 1px solid var(--tkm-border); display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 10px; }
+.tkm-ui .tkm-kb__hero > * { max-width: 100%; }
 .tkm-ui .tkm-kb__title { font-size: clamp(22px, 4vw, 30px); font-weight: 800; color: var(--tkm-text); }
 .tkm-ui .tkm-kb__lead { color: var(--tkm-text-2); font-size: var(--tkm-fs-md); max-width: 520px; line-height: 1.9; }
 .tkm-ui .tkm-kb__search { display: flex; align-items: center; gap: 8px; width: min(560px, 100%); margin-top: 10px; padding: 6px 6px 6px 6px; padding-inline-start: 16px; border-radius: 16px; background: var(--tkm-surface); border: 1px solid var(--tkm-border-strong); box-shadow: var(--tkm-shadow-sm); color: var(--tkm-text-3); }
@@ -306,3 +306,14 @@
 .tkm-ui .tkm-kb__cta div { display: grid; gap: 2px; }
 .tkm-ui .tkm-kb__cta strong { font-size: var(--tkm-fs-md); color: var(--tkm-text); }
 .tkm-ui .tkm-kb__cta span { font-size: var(--tkm-fs-sm); color: var(--tkm-text-3); }
+
+/* Themes (WooCommerce forms, block themes) restyle label/span; keep our switch intact. */
+.tkm-ui label.tkm-dropzone { display: flex !important; margin: 0 !important; width: auto !important; float: none !important; }
+.tkm-ui label.tkm-switch { display: inline-flex !important; align-items: center; gap: 10px; margin: 0 !important; padding: 0 !important; width: auto !important; float: none !important; }
+.tkm-ui .tkm-switch .tkm-switch__track { display: inline-block !important; width: 38px !important; height: 22px !important; flex: none; }
+
+/* Grid/flex children never force their parent wider than the viewport. */
+.tkm-ui.tkm-app :where(.tkm-card, .tkm-field, .tkm-tile, .tkm-tile__box, .tkm-form-section > *, .tkm-stat) { min-width: 0; }
+@media (max-width: 360px) {
+  .tkm-ui .tkm-tiles { grid-template-columns: minmax(0, 1fr); }
+}

@@ -54,7 +54,8 @@ final class Tickets
 
     public static function valid_statuses()
     {
-        return wp_list_pluck(tkm_get_status(), 'slug');
+        // tkm_get_status() only lists «trash» on wp-admin screens; REST and cron need it too.
+        return array_values(array_unique(array_merge(wp_list_pluck(tkm_get_status(), 'slug'), ['trash'])));
     }
 
     /**

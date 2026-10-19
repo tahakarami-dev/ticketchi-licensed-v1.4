@@ -64,6 +64,12 @@ final class KnowledgeBase
             'show_admin_column' => true,
             'rewrite'           => ['slug' => $slug . '-category', 'with_front' => false],
         ]);
+
+        // The article slug changed in settings: rebuild permalinks once.
+        if (get_option('tkm_flush_rewrite')) {
+            delete_option('tkm_flush_rewrite');
+            flush_rewrite_rules(false);
+        }
     }
 
     /** @return array[] {id,title,excerpt,url,category} */

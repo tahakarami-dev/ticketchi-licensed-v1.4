@@ -33,7 +33,7 @@ class TKM_MENU extends BASE_MENU
                 'page_title' => 'تنظیمات',
                 'menu_title' => 'تنظیمات',
                 'menu_slug' => 'tkm-settings',
-                'callback' => '',
+                'callback' => 'settings_page',
                 'load' => [
                     'status' => false,
                 ]
@@ -117,19 +117,40 @@ class TKM_MENU extends BASE_MENU
         // Compose form is processed before output so it can redirect (Post/Redirect/Get).
         add_action('admin_init', [$this, 'handle_post']);
         add_action('admin_init', ['TKM_Admin_Department_Manager', 'boot']);
-        add_action('admin_head', [$this, 'hide_redirect_pages']);
+        add_action('admin_menu', [$this, 'single_entry'], 999);
     }
 
-    /** The two legacy entries stay registered (old links) but out of the sidebar. */
-    public function hide_redirect_pages()
+    /**
+     * One sidebar entry that opens the app. Every screen stays registered under
+     * the original parent (licence + capability checks unchanged); pointing the
+     * top-level item at the dashboard simply detaches the submenu list.
+     */
+    public function single_entry()
     {
-        echo '<style>#adminmenu a[href*="page=tkm-edit-ticket"],#adminmenu a[href*="page=tkm-my-departments"]{display:none!important}</style>';
+        global $menu;
+        foreach ((array) $menu as $i => $item) {
+            if (isset($item[2]) && trim($item[2]) === 'tkm-settings') {
+                // A plain URL: WordPress prints it as the href (no submenu is keyed by it).
+                $menu[$i][2] = 'admin.php?page=tkm-analysis';
+                $menu[$i][6] = self::menu_icon();
+                // «menu-icon-generic» forces background-image:none on the SVG.
+                $menu[$i][4] = trim(str_replace('menu-icon-generic', '', isset($item[4]) ? $item[4] : '')) . ' tkm-menu-entry';
+            }
+        }
+    }
+
+    /** Ticket with typing dots; WordPress repaints the SVG to match the admin colour scheme. */
+    public static function menu_icon()
+    {
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="black" fill-rule="evenodd" d="M3.5 3.5h13a2.5 2.5 0 0 1 2.5 2.5v2.1a1.9 1.9 0 0 0 0 3.8V14a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 1 14v-2.1a1.9 1.9 0 0 0 0-3.8V6a2.5 2.5 0 0 1 2.5-2.5zM5.7 10a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0zm3 0a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0zm3 0a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0z"/></svg>';
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
 
     public function page()
     {
-        // The top-level slug is shared with the Codestar settings screen, which renders itself.
+        // The top-level slug is the settings screen.
         if (isset($_GET['page']) && trim(wp_unslash($_GET['page'])) === 'tkm-settings') {
+            $this->settings_page();
             return;
         }
         $this->tkm_analysis();
@@ -150,6 +171,21 @@ class TKM_MENU extends BASE_MENU
         include TKM_VIEWS_PATH . 'admin/partials/header.php';
         \Ticketchi\Admin\Screens::deny();
         include TKM_VIEWS_PATH . 'admin/partials/footer.php';
+    }
+
+    public function settings_page()
+    {
+        // Both the top-level and the submenu registration may fire for this slug.
+        static $rendered = false;
+        if ($rendered) {
+            return;
+        }
+        $rendered = true;
+        if (!current_user_can('tkm_manage')) {
+            $this->tkm_render_denied();
+            return;
+        }
+        include TKM_VIEWS_PATH . 'admin/settings/app.php';
     }
 
     public function reports_page()

@@ -43,6 +43,7 @@
                 if (!res.ok || data === null) {
                     var err = new Error((data && data.message) || (res.status === 403 ? 'دسترسی ندارید یا نشست شما منقضی شده است؛ صفحه را تازه کنید.' : 'ارتباط با سرور برقرار نشد.'));
                     err.status = res.status;
+                    err.fields = (data && data.fields) || [];
                     throw err;
                 }
                 return data;
@@ -316,7 +317,7 @@
             el.hidden = false;
             input.value = '';
             paint([{ title: 'رفتن به', items: pages('') }]);
-            setTimeout(function () { input.focus(); }, 10);
+            input.focus();
         }
         function close() { el.hidden = true; }
 
@@ -367,7 +368,19 @@
     };
     window.TKM = kit;
 
+    function usermenu() {
+        var root = document.querySelector('[data-usermenu]');
+        if (!root) return;
+        var btn = root.querySelector('[data-usermenu-toggle]');
+        var panel = root.querySelector('[data-usermenu-panel]');
+        function set(open) { panel.hidden = !open; btn.setAttribute('aria-expanded', String(open)); }
+        btn.addEventListener('click', function (e) { e.stopPropagation(); set(panel.hidden); });
+        document.addEventListener('click', function (e) { if (!root.contains(e.target)) set(false); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+    }
+
     function init() {
+        usermenu();
         kit.bell = bell();
         kit.palette = palette();
     }

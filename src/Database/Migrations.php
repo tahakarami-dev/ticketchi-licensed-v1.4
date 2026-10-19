@@ -11,7 +11,7 @@ defined('ABSPATH') || exit('NO Access');
 final class Migrations
 {
     const OPTION = 'tkm_db_version';
-    const VERSION = '2.0.0';
+    const VERSION = '2.0.1';
 
     public static function maybe_run()
     {
@@ -103,6 +103,7 @@ final class Migrations
         $wpdb->query("UPDATE {$p}tkm_tickets SET updated_at = COALESCE(reply_date, create_date) WHERE updated_at IS NULL");
 
         \Ticketchi\Support\Capabilities::install();
+        \Ticketchi\Admin\SettingsSchema::ensure_defaults();
 
         update_option(self::OPTION, self::VERSION, false);
     }

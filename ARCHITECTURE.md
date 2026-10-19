@@ -48,13 +48,15 @@ src/
   Reports/Reports.php     شاخص‌ها، سری روزانه، کارشناسان، نقشه حرارتی، CSV
   Kb/KnowledgeBase.php    نوع نوشته مقاله، جستجو، شورت‌کد [ticketchi_kb]
   Rest/Api.php            ticketchi/v1
-  Admin/Screens.php       بارگذاری اپ‌ها و هدایت پیوندهای قدیمی
+  Admin/Screens.php       بارگذاری اپ‌ها، حالت تمام‌صفحه و هدایت پیوندهای قدیمی
+  Admin/SettingsSchema.php همه تنظیمات (بخش‌ها، پیش‌فرض‌ها، اعتبارسنجی) روی گزینه tkm_settings
 assets/admin/js/
   tkm-kit.js              کلاینت REST، قالب‌بندی، زنگوله، Ctrl+K (همه صفحات)
   tkm-inbox.js            صندوق پشتیبانی
   tkm-automations.js      سازنده قوانین
   tkm-reports.js          گزارش‌ها (SVG دستی، بدون کتابخانه)
   tkm-team.js             برچسب‌ها و حجم کار تیم
+  tkm-settings.js         اپ تنظیمات
 ```
 
 ## پایگاه داده
@@ -95,6 +97,7 @@ assets/admin/js/
 | `GET /notifications` · `POST /notifications/read` | اعلان‌ها |
 | `GET/POST /automations` · `PUT/DELETE /automations/{id}` | قوانین (مدیر) |
 | `GET /reports?from=Y-m-d&to=Y-m-d` | گزارش (مدیر) |
+| `GET/POST /settings` | تنظیمات: ساختار بخش‌ها + مقادیر؛ ذخیره با اعتبارسنجی (مدیر) |
 | `GET /kb/search?q=` | جستجوی عمومی مقاله‌ها |
 
 ## کرون‌ها

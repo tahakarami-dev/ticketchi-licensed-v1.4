@@ -7,6 +7,7 @@ defined('ABSPATH') || exit('NO Access');
 $tkm_current = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
 $tkm_can_manage = current_user_can('tkm_manage');
 $tkm_shell_class = isset($tkm_shell_class) ? $tkm_shell_class : '';
+$tkm_me = wp_get_current_user();
 
 $tkm_nav = [
     'tkm-analysis'    => ['label' => 'داشبورد', 'icon' => 'grid'],
@@ -28,6 +29,7 @@ $tkm_nav = [
     </script>
 
     <header class="tkm-topbar">
+        <a class="tkm-exit" href="<?php echo esc_url(admin_url()); ?>" title="بازگشت به پیشخوان وردپرس" aria-label="بازگشت به پیشخوان وردپرس"><?php echo tkm_icon('arrow-right', 18); ?></a>
         <a class="tkm-brand" href="<?php echo esc_url(tkm_admin_url('tkm-analysis')); ?>">
             <span class="tkm-brand__mark" aria-hidden="true"><?php echo tkm_icon('ticket', 20); ?></span>
             <span class="tkm-brand__text">
@@ -70,6 +72,21 @@ $tkm_nav = [
             <a class="tkm-btn tkm-btn--primary" href="<?php echo esc_url(tkm_admin_url('tkm-new-ticket')); ?>">
                 <?php echo tkm_icon('plus', 16); ?><span class="tkm-hide-sm">تیکت جدید</span>
             </a>
+            <div class="tkm-usermenu" data-usermenu>
+                <button type="button" class="tkm-usermenu__btn" data-usermenu-toggle aria-haspopup="true" aria-expanded="false" aria-label="حساب کاربری">
+                    <?php echo tkm_avatar($tkm_me->ID, 'sm'); ?>
+                </button>
+                <div class="tkm-popover tkm-usermenu__panel" data-usermenu-panel hidden>
+                    <div class="tkm-usermenu__who">
+                        <strong><?php echo esc_html($tkm_me->display_name); ?></strong>
+                        <span class="tkm-ltr"><?php echo esc_html($tkm_me->user_email); ?></span>
+                    </div>
+                    <a href="<?php echo esc_url(admin_url()); ?>"><?php echo tkm_icon('home', 16); ?> پیشخوان وردپرس</a>
+                    <a href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener"><?php echo tkm_icon('external', 16); ?> نمایش سایت</a>
+                    <a href="<?php echo esc_url(get_edit_profile_url($tkm_me->ID)); ?>"><?php echo tkm_icon('user', 16); ?> ویرایش پروفایل</a>
+                    <a href="<?php echo esc_url(wp_logout_url(admin_url())); ?>" class="is-danger"><?php echo tkm_icon('arrow-left', 16); ?> خروج</a>
+                </div>
+            </div>
         </div>
     </header>
 

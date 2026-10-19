@@ -35,6 +35,9 @@ async function launch() {
 async function session(browser, user, opts = {}) {
   const context = await browser.newContext({ viewport: opts.viewport || { width: 1440, height: 900 }, locale: 'fa-IR' });
   await context.grantPermissions(['microphone'], { origin: BASE });
+  // Only the test site: third-party assets (gravatar, theme fonts) can hang behind a proxy and stall «load».
+  const host = new URL(BASE).host;
+  await context.route('**/*', (route) => (new URL(route.request().url()).host === host || route.request().url().startsWith('blob:') || route.request().url().startsWith('data:') ? route.continue() : route.abort()));
   const page = await context.newPage();
   page.jsErrors = [];
   page.on('pageerror', (e) => page.jsErrors.push(e.message));
@@ -52,8 +55,18 @@ async function shot(page, name) {
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: true });
 }
 
+// RTL content that spills to the left never grows scrollWidth, so measure our own elements too.
 async function noHorizontalOverflow(page) {
-  return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
+  return page.evaluate(() => {
+    const W = document.documentElement.clientWidth;
+    if (document.documentElement.scrollWidth > window.innerWidth + 1) return false;
+    return ![...document.querySelectorAll('.tkm-ui *')].some((el) => {
+      if (el.closest('[hidden], .tkm-modal, .tkm-cmdk, .tkm-popover, .tkm-nav, .tkm-st-nav, .tkm-heat, .tkm-table-wrap, .tkm-chart__tooltip')) return false;
+      if (getComputedStyle(el).visibility === 'hidden') return false; // closed off-canvas drawers
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && (r.left < -1 || r.right > W + 1);
+    });
+  });
 }
 
 function done() {

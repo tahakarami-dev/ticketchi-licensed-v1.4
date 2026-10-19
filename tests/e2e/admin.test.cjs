@@ -280,14 +280,41 @@ async function fillEditor(page, id, text) {
   console.log('\nSettings');
   await page.goto(A('tkm-settings'));
   ok(await page.locator('.tkm-topbar').count() === 1 && await page.locator('.tkm-kpis').count() === 0, 'settings wrapped in shell, no duplicate dashboard');
-  ok(await page.locator('.tkm-settings .csf-nav').isVisible(), 'Codestar navigation visible');
-  await page.click('.csf-nav a:has-text("استایل")');
-  await page.locator('[data-depend-id="primary_color"]').evaluate((el) => { el.value = '#7c3aed'; el.dispatchEvent(new Event('change', { bubbles: true })); });
-  await page.click('.csf-footer .csf-save');
-  await page.waitForResponse((r) => r.url().includes('admin-ajax.php'));
-  await page.waitForTimeout(500);
+  await page.waitForSelector('#tkm-settings-app[data-state="ready"]');
+  ok((await page.locator('[data-nav]').count()) >= 12, 'settings app lists every section');
+  // dependent field follows its switch; save bar appears only while something changed
+  const depBefore = await page.locator('[data-field="alert-message-ticket"]').isVisible();
+  await page.locator('[data-field="new-ticket-alert"] .tkm-switch').click();
+  ok(depBefore !== await page.locator('[data-field="alert-message-ticket"]').isVisible(), 'dependent field shows/hides with its switch');
+  ok(await page.locator('[data-savebar]').isVisible(), 'save bar appears on change');
+  await page.locator('[data-field="new-ticket-alert"] .tkm-switch').click();
+  ok(await page.locator('[data-savebar]').isHidden(), 'save bar hides when the change is undone');
+  await page.click('[data-nav="brand"]');
+  await page.fill('[data-bind="primary_color"]', '#7c3aed');
+  ok((await page.locator('[data-brand-preview]').evaluate((el) => el.style.getPropertyValue('--tkm-primary'))) === '#7c3aed', 'live brand preview');
+  await page.keyboard.press('Control+s');
+  await page.waitForSelector('.tkm-toast--success', { timeout: 8000 }).catch(() => {});
   const color = wp(`echo tkm_settings('primary_color');`);
-  ok(color.toLowerCase() === '#7c3aed', 'settings save via Codestar', color);
+  ok(color.toLowerCase() === '#7c3aed', 'settings saved with Ctrl+S', color);
+  // repeater: add a canned reply
+  await page.click('[data-nav="canned"]');
+  const cannedBefore = Number(wp(`echo count((array) tkm_settings('save_message'));`));
+  await page.click('[data-rep-add]');
+  await page.locator('[data-rep-item]').last().locator('input').first().fill('پاسخ تست ' + stamp);
+  await page.locator('[data-rep-item]').last().locator('textarea').fill('متن تست');
+  await page.click('[data-save]');
+  await page.waitForTimeout(1200);
+  ok(Number(wp(`echo count((array) tkm_settings('save_message'));`)) === cannedBefore + 1, 'canned reply added through the repeater');
+  // validation
+  await page.click('[data-nav="notify"]');
+  await page.fill('[data-bind="email_from_address"]', 'not-an-email');
+  await page.click('[data-save]');
+  await page.waitForSelector('[data-field="email_from_address"].has-error', { timeout: 8000 }).catch(() => {});
+  ok(await page.locator('[data-field="email_from_address"].has-error').count() === 1, 'invalid email rejected and highlighted');
+  await page.fill('[data-bind="email_from_address"]', '');
+  // custom status with a reserved slug is refused
+  const badStatus = await page.evaluate(async () => (await fetch(TKM_APP.root + 'settings', { method: 'POST', headers: { 'X-WP-Nonce': TKM_APP.nonce, 'Content-Type': 'application/json' }, body: JSON.stringify({ values: { statues: [{ 'status-title': 'x', 'status-slug': 'open', 'color-status': '#000000' }] } }) })).status);
+  ok(badStatus === 400, 'custom status cannot reuse a built-in slug', String(badStatus));
   await shot(page, 'admin-settings');
   const front = await session(browser, 'ali');
   await front.page.goto(`${BASE}/my-account/tickets/`);

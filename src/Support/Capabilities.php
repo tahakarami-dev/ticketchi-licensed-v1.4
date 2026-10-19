@@ -21,6 +21,36 @@ final class Capabilities
     public static function register()
     {
         add_filter('user_has_cap', [__CLASS__, 'grant'], 10, 4);
+
+        // WooCommerce sends users without edit_posts back to «My account»; agents need wp-admin.
+        add_filter('woocommerce_prevent_admin_access', function ($prevent) {
+            return $prevent && !self::is_agent_only();
+        });
+        add_filter('woocommerce_disable_admin_bar', function ($disable) {
+            return $disable && !self::is_agent_only();
+        });
+        add_filter('login_redirect', [__CLASS__, 'login_redirect'], 20, 3);
+        add_filter('woocommerce_login_redirect', function ($redirect, $user) {
+            return self::is_agent_only($user) ? admin_url('admin.php?page=tkm-tickets') : $redirect;
+        }, 20, 2);
+    }
+
+    /** Support staff who would otherwise have no reason to be in wp-admin. */
+    public static function is_agent_only($user = null)
+    {
+        $user = $user ?: wp_get_current_user();
+        if (!$user || empty($user->ID)) {
+            return false;
+        }
+        return user_can($user, self::VIEW) && !user_can($user, 'edit_posts');
+    }
+
+    public static function login_redirect($redirect, $requested, $user)
+    {
+        if ($user instanceof \WP_User && self::is_agent_only($user) && (!$requested || strpos($requested, 'wp-admin') === false || $requested === admin_url())) {
+            return admin_url('admin.php?page=tkm-tickets');
+        }
+        return $redirect;
     }
 
     public static function install()

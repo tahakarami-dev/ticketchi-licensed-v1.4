@@ -377,8 +377,8 @@ body.tkm-admin-page #wpbody-content > .notice:not(.notice-error), body.tkm-admin
 }
 @media (max-width: 1180px) {
   .tkm-ui .tkm-ib-convo__body { grid-template-columns: minmax(0, 1fr); position: relative; }
-  .tkm-ui .tkm-ib-side { position: absolute; inset-block: 0; inset-inline-end: 0; width: min(340px, 92%); z-index: 6; box-shadow: var(--tkm-shadow-lg); transform: translateX(-105%); transition: transform .22s var(--tkm-ease); }
-  .tkm-ui .tkm-inbox.show-side .tkm-ib-side { transform: none; }
+  .tkm-ui .tkm-ib-side { position: absolute; inset-block: 0; inset-inline-end: 0; width: min(340px, 92%); z-index: 6; box-shadow: var(--tkm-shadow-lg); transform: translateX(-105%); visibility: hidden; transition: transform .22s var(--tkm-ease), visibility 0s .22s; }
+  .tkm-ui .tkm-inbox.show-side .tkm-ib-side { transform: none; visibility: visible; transition: transform .22s var(--tkm-ease); }
   .tkm-ui .tkm-ib-side-toggle { display: inline-flex; }
   .tkm-ui .tkm-hide-md { display: none; }
 }

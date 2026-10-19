@@ -62,6 +62,7 @@ async function noHorizontalOverflow(page) {
     if (document.documentElement.scrollWidth > window.innerWidth + 1) return false;
     return ![...document.querySelectorAll('.tkm-ui *')].some((el) => {
       if (el.closest('[hidden], .tkm-modal, .tkm-cmdk, .tkm-popover, .tkm-nav, .tkm-st-nav, .tkm-heat, .tkm-table-wrap, .tkm-chart__tooltip')) return false;
+      if (getComputedStyle(el).visibility === 'hidden') return false; // closed off-canvas drawers
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && (r.left < -1 || r.right > W + 1);
     });

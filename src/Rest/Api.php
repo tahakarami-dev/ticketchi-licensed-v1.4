@@ -432,7 +432,7 @@ final class Api
                 'trigger'    => $rule->trigger_event,
                 'conditions' => $rule->conditions,
                 'actions'    => $rule->actions,
-                'is_active'  => $rule->is_active,
+                'is_active'  => (int) $rule->is_active === 1,
                 'runs'       => (int) $rule->run_count,
             ];
         }, Engine::all());

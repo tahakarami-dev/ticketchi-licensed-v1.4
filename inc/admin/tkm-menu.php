@@ -145,13 +145,28 @@ class TKM_MENU extends BASE_MENU
         include TKM_VIEWS_PATH . 'admin/analysis/analysis.php';
     }
 
+    private function tkm_render_denied()
+    {
+        include TKM_VIEWS_PATH . 'admin/partials/header.php';
+        \Ticketchi\Admin\Screens::deny();
+        include TKM_VIEWS_PATH . 'admin/partials/footer.php';
+    }
+
     public function reports_page()
     {
+        if (!current_user_can('tkm_manage')) {
+            $this->tkm_render_denied();
+            return;
+        }
         include TKM_VIEWS_PATH . 'admin/reports/app.php';
     }
 
     public function automations_page()
     {
+        if (!current_user_can('tkm_manage')) {
+            $this->tkm_render_denied();
+            return;
+        }
         include TKM_VIEWS_PATH . 'admin/automations/app.php';
     }
 

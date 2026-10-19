@@ -512,3 +512,14 @@ html.tkm-lock, html.tkm-lock body { overflow: hidden; }
   .tkm-ui .tkm-heat { overflow-x: auto; }
   .tkm-ui .tkm-heat__row { min-width: 560px; }
 }
+
+/* ═════════════ Team page ═════════════ */
+.tkm-ui .tkm-tagm__new { display: flex; gap: 8px; margin-bottom: 14px; }
+.tkm-ui .tkm-tagm__new .tkm-input { flex: 1; }
+.tkm-ui input.tkm-tagm__color { width: 40px; height: 40px; padding: 3px; border-radius: 10px; border: 1px solid var(--tkm-border-strong); background: var(--tkm-surface); cursor: pointer; flex: none; }
+.tkm-ui .tkm-tagm__row input.tkm-tagm__color { width: 34px; height: 34px; }
+.tkm-ui .tkm-tagm__list { display: grid; gap: 6px; }
+.tkm-ui .tkm-tagm__row { display: flex; align-items: center; gap: 8px; }
+.tkm-ui .tkm-tagm__row .tkm-input--sm { flex: 1; height: 34px; min-height: 34px; font-size: var(--tkm-fs-sm); }
+.tkm-ui .tkm-tagm__count { font-size: 12px; color: var(--tkm-text-3) !important; white-space: nowrap; min-width: 60px; }
+.tkm-ui .tkm-tagm__count:hover { color: var(--tkm-primary) !important; }

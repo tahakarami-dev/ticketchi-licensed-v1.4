@@ -14,7 +14,7 @@ defined('ABSPATH') || exit('NO Access');
  */
 final class Screens
 {
-    const APPS = ['tkm-tickets' => 'inbox', 'tkm-reports' => 'reports', 'tkm-automations' => 'automations'];
+    const APPS = ['tkm-tickets' => 'inbox', 'tkm-reports' => 'reports', 'tkm-automations' => 'automations', 'tkm-departments' => 'team'];
 
     public static function register()
     {

@@ -74,4 +74,37 @@ final class Capabilities
     {
         return $user_id ? user_can($user_id, self::MANAGE) : current_user_can(self::MANAGE);
     }
+
+    /**
+     * Departments whose tickets an agent may see. null = everything (managers,
+     * or when the "agents see all tickets" setting is on).
+     *
+     * @return int[]|null
+     */
+    public static function scope($user_id)
+    {
+        $user_id = (int) $user_id;
+        if (self::can_manage($user_id) || Settings::get('agent_scope', 'departments') === 'all') {
+            return null;
+        }
+        static $cache = [];
+        if (!isset($cache[$user_id])) {
+            global $wpdb;
+            $own = array_map('intval', $wpdb->get_col($wpdb->prepare("SELECT DISTINCT department_id FROM {$wpdb->prefix}tkm_users WHERE user_id = %d", $user_id)));
+            $children = $own ? array_map('intval', $wpdb->get_col('SELECT ID FROM ' . $wpdb->prefix . 'tkm_departments WHERE parent IN (' . implode(',', $own) . ')')) : [];
+            $cache[$user_id] = array_values(array_unique(array_merge($own, $children)));
+        }
+        return $cache[$user_id];
+    }
+
+    /** May this user open the ticket? (scope check on top of tkm_view) */
+    public static function can_access_ticket($ticket, $user_id = null)
+    {
+        $user_id = $user_id ?: get_current_user_id();
+        if (!$ticket || !self::can_view($user_id)) {
+            return false;
+        }
+        $scope = self::scope($user_id);
+        return $scope === null || (int) $ticket->assignee_id === (int) $user_id || in_array((int) $ticket->department_id, $scope, true);
+    }
 }

@@ -95,6 +95,12 @@ final class TicketQuery
                 $w[] = "t.status != 'trash'";
         }
 
+        $scope = \Ticketchi\Support\Capabilities::scope($user_id);
+        if ($scope !== null) {
+            $w[] = $scope ? '(t.department_id IN (' . implode(',', $scope) . ') OR t.assignee_id = %d)' : 't.assignee_id = %d';
+            $p[] = (int) $user_id;
+        }
+
         if (!empty($args['status'])) {
             $w[] = 't.status = %s';
             $p[] = sanitize_key($args['status']);

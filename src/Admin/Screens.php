@@ -60,10 +60,13 @@ final class Screens
             'csv'      => wp_nonce_url(admin_url('admin-post.php?action=tkm_reports_csv'), 'tkm_reports_csv'),
         ]);
 
+        wp_enqueue_style('tkm-app', TKM_ADMIN_ASSETS . 'css/tkm-app.css', ['tkm-admin'], TKM_VER);
+        wp_enqueue_script('tkm-kit', TKM_ADMIN_ASSETS . 'js/tkm-kit.js', ['tkm-main'], TKM_VER, true);
+
         $page = self::current();
         if (isset(self::APPS[$page])) {
             $app = self::APPS[$page];
-            wp_enqueue_script('tkm-' . $app, TKM_ADMIN_ASSETS . 'js/tkm-' . $app . '.js', ['tkm-main'], TKM_VER, true);
+            wp_enqueue_script('tkm-' . $app, TKM_ADMIN_ASSETS . 'js/tkm-' . $app . '.js', ['tkm-kit'], TKM_VER, true);
         }
     }
 

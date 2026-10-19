@@ -93,6 +93,19 @@ final class Api
         return new WP_REST_Response(['code' => $e->get_error_code(), 'message' => $e->get_error_message()], $status);
     }
 
+    /** @return object|WP_REST_Response */
+    private static function load($id)
+    {
+        $ticket = Tickets::find((int) $id);
+        if (!$ticket) {
+            return new WP_REST_Response(['message' => 'تیکت پیدا نشد.'], 404);
+        }
+        if (!Capabilities::can_access_ticket($ticket)) {
+            return new WP_REST_Response(['message' => 'این تیکت در دپارتمان‌های شما نیست.'], 403);
+        }
+        return $ticket;
+    }
+
     /* ───────────── Meta ───────────── */
 
     public static function meta()
@@ -195,9 +208,9 @@ final class Api
 
     public static function ticket(WP_REST_Request $r)
     {
-        $ticket = Tickets::find($r['id']);
-        if (!$ticket) {
-            return new WP_REST_Response(['message' => 'تیکت پیدا نشد.'], 404);
+        $ticket = self::load($r['id']);
+        if ($ticket instanceof WP_REST_Response) {
+            return $ticket;
         }
         $detail = Presenter::detail($ticket);
         $detail['customer_profile'] = Customers::profile(Tickets::customer_id($ticket));
@@ -206,9 +219,9 @@ final class Api
 
     public static function update(WP_REST_Request $r)
     {
-        $ticket = Tickets::find($r['id']);
-        if (!$ticket) {
-            return new WP_REST_Response(['message' => 'تیکت پیدا نشد.'], 404);
+        $ticket = self::load($r['id']);
+        if ($ticket instanceof WP_REST_Response) {
+            return $ticket;
         }
 
         $params = $r->get_json_params() ?: $r->get_body_params();
@@ -234,9 +247,9 @@ final class Api
 
     public static function reply(WP_REST_Request $r)
     {
-        $ticket = Tickets::find($r['id']);
-        if (!$ticket) {
-            return new WP_REST_Response(['message' => 'تیکت پیدا نشد.'], 404);
+        $ticket = self::load($r['id']);
+        if ($ticket instanceof WP_REST_Response) {
+            return $ticket;
         }
 
         $body = (string) $r->get_param('body');
@@ -287,7 +300,7 @@ final class Api
 
         $done = 0;
         foreach ($ids as $id) {
-            if (!Tickets::find($id)) {
+            if (!Capabilities::can_access_ticket(Tickets::find($id))) {
                 continue;
             }
             switch ($action) {
@@ -324,6 +337,9 @@ final class Api
 
     public static function destroy(WP_REST_Request $r)
     {
+        if (!Tickets::find((int) $r['id'])) {
+            return new WP_REST_Response(['message' => 'تیکت پیدا نشد.'], 404);
+        }
         Tickets::delete((int) $r['id']);
         return ['deleted' => true];
     }

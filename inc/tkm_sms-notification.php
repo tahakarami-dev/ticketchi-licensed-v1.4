@@ -44,14 +44,17 @@ class TKM_SMS_Notification
 
     private function get_phone($ticket)
     {
-        $is_admin = is_admin();
+        $meta_key = tkm_settings('phone-service-key-user');
 
-        if (is_admin() && !wp_doing_ajax()) {
-            return get_user_meta($ticket->user_id, tkm_settings('phone-service-key-user'), true);
-        } else {
-            return get_user_meta($ticket->creator_id, tkm_settings('phone-service-key-user'), true);
+        // An empty key would make get_user_meta() return every meta value.
+        if (empty($meta_key)) {
+            return null;
         }
 
+        $user_id = (is_admin() && !wp_doing_ajax()) ? $ticket->user_id : $ticket->creator_id;
+        $phone = $user_id ? get_user_meta($user_id, $meta_key, true) : '';
+
+        return is_scalar($phone) && $phone !== '' ? (string) $phone : null;
     }
 
 

@@ -222,5 +222,5 @@ async function fillEditor(page, id, text) {
   done();
 })().catch((e) => {
   console.error(e);
-  process.exitCode = 1;
+  process.exit(1); // an open browser would otherwise keep node alive
 });

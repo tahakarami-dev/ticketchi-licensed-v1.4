@@ -83,10 +83,12 @@ class Core
             new TKM_Admin_Ajax();
             new TKM_Analysis();
         } else {
-            new  TKM_SMS_Notification();
             new TKM_Shortcode_Router();
             new TKM_Shortcode_Url();
         }
+        // Front tickets arrive through admin-ajax.php (is_admin() === true), so the
+        // SMS listener must be registered in every context.
+        new TKM_SMS_Notification();
         new TKM_Front_AJAX();
         new TKM_ASSETS();
         new TKM_WC_Dashboard();

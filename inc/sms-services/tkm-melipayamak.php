@@ -18,6 +18,12 @@ class TKM_Melipayamak extends TKM_SMS
         curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($handle, CURLOPT_POST, true);
         curl_setopt($handle, CURLOPT_POSTFIELDS, $post_data);
+        // Never let a slow SMS gateway block ticket submission.
+        curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($handle, CURLOPT_TIMEOUT, 10);
         $response = curl_exec($handle);
+        curl_close($handle);
+
+        return $response;
     }
 }

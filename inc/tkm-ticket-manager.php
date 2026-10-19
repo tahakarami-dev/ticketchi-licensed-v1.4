@@ -14,45 +14,15 @@ class TKM_Ticket_Manager
         $this->table = $wpdb->prefix . 'tkm_tickets';
     }
 
+    /**
+     * Legacy entry point, kept for third-party callers. Delegates to the v2 domain service.
+     *
+     * @return array ['ticket_id' => int] on success, list of error messages otherwise
+     */
     public function insert($data)
     {
-        $errors = [];
-
-        if (empty(intval($data['department_id']))) {
-            $errors[] = 'لطفا ابتدا نوع تیکت را انتخاب نمایید';
-        }
-
-        if (empty($data['body'])) {
-            $errors[] = 'لطفا محتوا تیکت را وارد نمایید';
-        }
-
-        if (count($errors) > 0) {
-            return $errors;
-        }
-
-
-        $this->wpdb->insert(
-            $this->table,
-            [
-                'title' => sanitize_text_field($data['title']),
-                'body' =>  wp_kses_post($data['body']),
-                'creator_id' => $data['creator_id'] ? $data['creator_id'] : NULL,
-                'user_id' => $data['user_id'] ? $data['user_id'] : NULL,
-                'department_id' => $data['department_id'],
-                'status' => $data['status'],
-                'priority' => $data['priority'] ? $data['priority'] : 'medium',
-                'create_date' => date("Y-m-d H:i:s"),
-                'reply_date' => date("Y-m-d H:i:s"),
-                'file' => $data['file'] ? $data['file'] : NULL,
-                'voice' => $data['voice'] ? $data['voice'] : NULL,
-                'product' => $data['product'] ? $data['product'] : NULL,
-                'edd_product' => isset($data['edd_product']) ? $data['edd_product'] : NULL,
-            ],
-            ['%s', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d']
-        );
-
-        $insert_id = $this->wpdb->insert_id;
-        return ['ticket_id' => $insert_id];
+        $id = \Ticketchi\Domain\Tickets::create($data, !empty($data['creator_id']) ? (int) $data['creator_id'] : 0, 'customer');
+        return is_wp_error($id) ? [$id->get_error_message()] : ['ticket_id' => $id];
     }
 
     public function get_tickets($user_id, $type = NULL, $status = NULL, $orderby = NULL, $page_num = NULL, $priority = NULL)
@@ -186,13 +156,14 @@ class TKM_Ticket_Manager
 
     public function update_status($ticket_id, $status)
     {
-        return $this->wpdb->update($this->table, ['status' => $status], ['ID' => $ticket_id], ['%s'], ['%d']);
+        $result = \Ticketchi\Domain\Tickets::update($ticket_id, ['status' => $status], get_current_user_id());
+        return !is_wp_error($result);
     }
 
     public function update_reply_date($ticket_id)
     {
-        $date = date("Y-m-d H:i:s");
-        return $this->wpdb->query($this->wpdb->prepare("UPDATE " . $this->table . " SET reply_date = %s WHERE ID = %d", $date, $ticket_id));
+        $date = gmdate("Y-m-d H:i:s");
+        return $this->wpdb->update($this->table, ['reply_date' => $date, 'updated_at' => $date], ['ID' => (int) $ticket_id]);
     }
 
 

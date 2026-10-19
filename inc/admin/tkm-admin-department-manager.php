@@ -27,7 +27,7 @@ class TKM_Admin_Department_Manager
         $list_url = tkm_admin_url('tkm-departments');
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_department_nonce'])) {
-            if (!wp_verify_nonce($_POST['add_department_nonce'], 'add_department') || !current_user_can('manage_options')) {
+            if (!wp_verify_nonce($_POST['add_department_nonce'], 'add_department') || !current_user_can('tkm_manage')) {
                 wp_die('متاسفیم، نانس شما تایید نشد.', '', ['back_link' => true]);
             }
 
@@ -70,7 +70,7 @@ class TKM_Admin_Department_Manager
         }
 
         if (isset($_GET['action'], $_GET['id']) && $_GET['action'] === 'delete') {
-            if (!isset($_GET['delete_department_nonce']) || !wp_verify_nonce($_GET['delete_department_nonce'], 'delete_department') || !current_user_can('manage_options')) {
+            if (!isset($_GET['delete_department_nonce']) || !wp_verify_nonce($_GET['delete_department_nonce'], 'delete_department') || !current_user_can('tkm_manage')) {
                 wp_die('متاسفانه نانس شما تایید نشد.', '', ['back_link' => true]);
             }
 
@@ -91,8 +91,10 @@ class TKM_Admin_Department_Manager
         $answerable_manager = new TKM_Answerable_Mnager();
         $departments = $this->get_department();
 
-        if (isset($_GET['page']) && $_GET['page'] === 'tkm-my-departments') {
-            include TKM_VIEWS_PATH . 'admin/department/my.php';
+        if (!current_user_can('tkm_manage')) {
+            include TKM_VIEWS_PATH . 'admin/partials/header.php';
+            \Ticketchi\Admin\Screens::deny();
+            include TKM_VIEWS_PATH . 'admin/partials/footer.php';
             return;
         }
 

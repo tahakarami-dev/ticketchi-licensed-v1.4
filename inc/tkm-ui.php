@@ -131,26 +131,8 @@ function tkm_admin_url($page, $args = [])
  */
 function tkm_is_staff($user_id = null)
 {
-    static $cache = [];
-
     $user_id = $user_id ? (int) $user_id : get_current_user_id();
-    if (!$user_id) {
-        return false;
-    }
-
-    if (isset($cache[$user_id])) {
-        return $cache[$user_id];
-    }
-
-    if (user_can($user_id, 'manage_options') || user_can($user_id, 'manage_woocommerce')) {
-        return $cache[$user_id] = true;
-    }
-
-    global $wpdb;
-    return $cache[$user_id] = (bool) $wpdb->get_var($wpdb->prepare(
-        "SELECT ID FROM {$wpdb->prefix}tkm_users WHERE user_id = %d LIMIT 1",
-        $user_id
-    ));
+    return $user_id ? user_can($user_id, 'tkm_view') : false;
 }
 
 /**

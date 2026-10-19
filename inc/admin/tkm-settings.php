@@ -374,6 +374,7 @@ if (class_exists('CSF')) {
         'title' => 'سامانه های پیامکی',
         'options' => array(
           'melipayamak' => "ملی پیامک",
+          'kavenegar'   => "کاوه‌نگار",
 
 
         ),
@@ -408,7 +409,7 @@ if (class_exists('CSF')) {
         'id'    => 'sms-api',
         'type'  => 'text',
         'title' => ' کد api ',
-        'dependency' => array('sms-service', '==', 'kavehnegar'),
+        'dependency' => array('sms-service', '==', 'kavenegar'),
 
 
       ),
@@ -455,6 +456,92 @@ if (class_exists('CSF')) {
       ),
 
     )
+  ));
+
+  CSF::createSection($prefix, array(
+    'title'  => 'تیم و تخصیص',
+    'fields' => array(
+      array(
+        'type'    => 'subheading',
+        'content' => 'کارشناسان هر دپارتمان از صفحه «تیم و دپارتمان‌ها» تعیین می‌شوند. کاربرانی با نقش «کارشناس پشتیبانی» فقط به صندوق پشتیبانی دسترسی دارند.',
+      ),
+      array(
+        'id'      => 'assign_mode',
+        'type'    => 'select',
+        'title'   => 'تخصیص خودکار تیکت‌های جدید',
+        'options' => array(
+          'manual'       => 'دستی (بدون تخصیص خودکار)',
+          'round_robin'  => 'نوبتی بین کارشناسان دپارتمان (Round robin)',
+          'least_loaded' => 'به کارشناسی که کمترین تیکت باز را دارد',
+        ),
+        'default' => 'manual',
+      ),
+    ),
+  ));
+
+  CSF::createSection($prefix, array(
+    'title'  => 'SLA و زمان پاسخ',
+    'fields' => array(
+      array(
+        'id'      => 'sla_enable',
+        'type'    => 'switcher',
+        'title'   => 'فعال‌سازی SLA',
+        'label'   => 'برای هر تیکت مهلت اولین پاسخ و مهلت حل تعیین شود',
+        'default' => true,
+      ),
+      array('type' => 'subheading', 'content' => 'مهلت اولین پاسخ (ساعت)', 'dependency' => array('sla_enable', '==', 'true')),
+      array('id' => 'sla_first_high', 'type' => 'number', 'title' => 'اولویت زیاد', 'default' => 2, 'unit' => 'ساعت', 'dependency' => array('sla_enable', '==', 'true')),
+      array('id' => 'sla_first_medium', 'type' => 'number', 'title' => 'اولویت متوسط', 'default' => 8, 'unit' => 'ساعت', 'dependency' => array('sla_enable', '==', 'true')),
+      array('id' => 'sla_first_low', 'type' => 'number', 'title' => 'اولویت کم', 'default' => 24, 'unit' => 'ساعت', 'dependency' => array('sla_enable', '==', 'true')),
+      array('type' => 'subheading', 'content' => 'مهلت حل تیکت (ساعت)', 'dependency' => array('sla_enable', '==', 'true')),
+      array('id' => 'sla_resolve_high', 'type' => 'number', 'title' => 'اولویت زیاد', 'default' => 24, 'unit' => 'ساعت', 'dependency' => array('sla_enable', '==', 'true')),
+      array('id' => 'sla_resolve_medium', 'type' => 'number', 'title' => 'اولویت متوسط', 'default' => 48, 'unit' => 'ساعت', 'dependency' => array('sla_enable', '==', 'true')),
+      array('id' => 'sla_resolve_low', 'type' => 'number', 'title' => 'اولویت کم', 'default' => 96, 'unit' => 'ساعت', 'dependency' => array('sla_enable', '==', 'true')),
+      array(
+        'id'         => 'sla_business_hours',
+        'type'       => 'switcher',
+        'title'      => 'ساعات کاری',
+        'label'      => 'مهلت‌ها فقط در ساعات کاری شمرده شوند',
+        'default'    => false,
+        'dependency' => array('sla_enable', '==', 'true'),
+      ),
+      array(
+        'id'         => 'sla_work_days',
+        'type'       => 'checkbox',
+        'title'      => 'روزهای کاری',
+        'inline'     => true,
+        'options'    => array('6' => 'شنبه', '0' => 'یکشنبه', '1' => 'دوشنبه', '2' => 'سه‌شنبه', '3' => 'چهارشنبه', '4' => 'پنجشنبه', '5' => 'جمعه'),
+        'default'    => array('6', '0', '1', '2', '3'),
+        'dependency' => array('sla_enable|sla_business_hours', '==|==', 'true|true'),
+      ),
+      array('id' => 'sla_work_start', 'type' => 'text', 'title' => 'شروع ساعت کاری', 'default' => '09:00', 'desc' => 'به شکل ۲۴ ساعته، مثلا 09:00', 'dependency' => array('sla_enable|sla_business_hours', '==|==', 'true|true')),
+      array('id' => 'sla_work_end', 'type' => 'text', 'title' => 'پایان ساعت کاری', 'default' => '17:00', 'dependency' => array('sla_enable|sla_business_hours', '==|==', 'true|true')),
+    ),
+  ));
+
+  CSF::createSection($prefix, array(
+    'title'  => 'اعلان‌ها',
+    'fields' => array(
+      array('type' => 'subheading', 'content' => 'ایمیل‌ها با قالب برند (رنگ اصلی) و به‌صورت راست‌چین ارسال می‌شوند.'),
+      array('id' => 'notify_customer_created', 'type' => 'switcher', 'title' => 'تایید ثبت تیکت', 'label' => 'ایمیل تایید به مشتری پس از ثبت تیکت', 'default' => true),
+      array('id' => 'notify_customer_reply', 'type' => 'switcher', 'title' => 'پاسخ کارشناس', 'label' => 'ایمیل به مشتری وقتی کارشناس پاسخ می‌دهد', 'default' => true),
+      array('id' => 'notify_agent_email', 'type' => 'switcher', 'title' => 'اعلان کارشناسان', 'label' => 'ایمیل به کارشناس برای تیکت جدید، پاسخ مشتری و تیکت‌های سپرده‌شده', 'default' => true),
+      array('id' => 'notify_sla_email', 'type' => 'switcher', 'title' => 'هشدار SLA', 'label' => 'ایمیل هشدار هنگام عبور از مهلت', 'default' => true),
+      array('id' => 'email_from_name', 'type' => 'text', 'title' => 'نام فرستنده', 'desc' => 'خالی = نام سایت'),
+      array('id' => 'email_from_address', 'type' => 'text', 'title' => 'ایمیل فرستنده', 'desc' => 'خالی = پیش‌فرض وردپرس'),
+      array('type' => 'subheading', 'content' => 'پیامک پاسخ (از سامانه انتخاب‌شده در بخش «پیامک»)'),
+      array('id' => 'sms_on_reply', 'type' => 'switcher', 'title' => 'پیامک پاسخ', 'label' => 'ارسال پیامک به مشتری وقتی کارشناس پاسخ می‌دهد', 'default' => false),
+      array('id' => 'sms_reply_pattern_code', 'type' => 'text', 'title' => 'کد / نام الگوی پیامک پاسخ', 'desc' => 'مقادیر الگو به ترتیب: شناسه تیکت، عنوان تیکت', 'dependency' => array('sms_on_reply', '==', 'true')),
+    ),
+  ));
+
+  CSF::createSection($prefix, array(
+    'title'  => 'پایگاه دانش',
+    'fields' => array(
+      array('id' => 'kb_enable', 'type' => 'switcher', 'title' => 'پیشنهاد مقاله', 'label' => 'هنگام نوشتن تیکت، مقاله‌های مرتبط به مشتری پیشنهاد شود', 'default' => true),
+      array('id' => 'kb_slug', 'type' => 'text', 'title' => 'نامک آدرس مقاله‌ها', 'default' => 'help', 'desc' => 'مثلا example.com/help/نام-مقاله — پس از تغییر، یک‌بار «تنظیمات › پیوندهای یکتا» را ذخیره کنید.'),
+      array('type' => 'content', 'content' => '<p>مقاله‌ها را از منوی «پایگاه دانش» در پیشخوان بنویسید. برای نمایش مرکز راهنما در یک صفحه از شورت‌کد <code>[ticketchi_kb]</code> استفاده کنید.</p>'),
+    ),
   ));
 
   CSF::createSection($prefix, array(

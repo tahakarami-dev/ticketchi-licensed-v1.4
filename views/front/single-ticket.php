@@ -27,7 +27,8 @@ $department_manager = new TKM_Front_Department_Manager();
 $department         = $department_manager->get_department($ticket->department_id);
 $parent_department  = ($department && $department->parent) ? $department_manager->get_department($department->parent) : null;
 
-$replies = (new TKM_Reply_Manager($ticket_id))->get_replys();
+// Internal staff notes are never shown to customers.
+$replies = (new TKM_Reply_Manager($ticket_id))->get_replys(false);
 
 $product_info = (tkm_settings('product_setting') && $ticket->product) ? get_product_name_and_link_by_id($ticket->product) : null;
 $edd_title    = (tkm_settings('edd_setting') && $ticket->edd_product) ? get_the_title($ticket->edd_product) : '';

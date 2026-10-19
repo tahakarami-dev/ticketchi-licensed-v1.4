@@ -38,10 +38,7 @@ class TKM_SMS_Notification
             }
 
             $code = tkm_settings('user_create_sms_pattern_code');
-            $send_sms = (new $class($phone, $message, $code))->send();
-            if ($send_sms) {
-                var_dump($send_sms);
-            }
+            (new $class($phone, $message, $code))->send();
         }
     }
 
@@ -60,12 +57,12 @@ class TKM_SMS_Notification
 
     private function get_message($ticket)
     {
-        $pattern = tkm_settings('user_create_pattern');
-        $pattern = explode(PHP_EOL, $pattern);
+        $pattern = (string) tkm_settings('user_create_pattern');
+        $pattern = preg_split('/\r\n|\r|\n/', $pattern);
         $pattern_array = [];
 
         $department_manager = new TKM_Admin_Department_Manager();
-        $department = $department_manager->get_a_department($ticket->ID);
+        $department = $department_manager->get_a_department($ticket->department_id);
 
         foreach ($pattern as $code) {
             $code = trim($code); 
@@ -80,7 +77,7 @@ class TKM_SMS_Notification
                     break;
 
                 case '{{department}}':
-                    $pattern_array['department'] = $department->name;
+                    $pattern_array['department'] = $department ? $department->name : '';
                     break;
 
                 case '{{status}}':

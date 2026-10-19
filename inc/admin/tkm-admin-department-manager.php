@@ -13,77 +13,102 @@ class TKM_Admin_Department_Manager
         $this->table = $wpdb->prefix . 'tkm_departments';
     }
 
+    /**
+     * Handles add / update / delete before output so we can redirect.
+     */
+    public static function boot()
+    {
+        if (!isset($_GET['page']) || $_GET['page'] !== 'tkm-departments') {
+            return;
+        }
+
+        $self = new self();
+        $answerable_manager = new TKM_Answerable_Mnager();
+        $list_url = tkm_admin_url('tkm-departments');
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_department_nonce'])) {
+            if (!wp_verify_nonce($_POST['add_department_nonce'], 'add_department') || !current_user_can('manage_options')) {
+                wp_die('متاسفیم، نانس شما تایید نشد.', '', ['back_link' => true]);
+            }
+
+            $data = wp_unslash($_POST);
+
+            if (trim((string) ($data['name'] ?? '')) === '') {
+                tkm_flash('عنوان دپارتمان الزامی است.', 'danger');
+                wp_safe_redirect(wp_get_referer() ?: $list_url);
+                exit;
+            }
+
+            $users = !empty($data['department-answerabel']) ? array_filter(array_map('absint', (array) $data['department-answerabel'])) : [];
+
+            if (!empty($data['department_id'])) {
+                $department_id = absint($data['department_id']);
+                $result = $self->update($department_id, $data);
+                if ($result !== false) {
+                    $answerable_manager->delete($department_id);
+                    foreach (array_unique($users) as $user) {
+                        $answerable_manager->insert(['department_id' => $department_id, 'user_id' => $user]);
+                    }
+                    tkm_flash('دپارتمان «' . esc_html($data['name']) . '» بروزرسانی شد.');
+                } else {
+                    tkm_flash('بروزرسانی دپارتمان با خطا مواجه شد.', 'danger');
+                }
+            } else {
+                $insert = $self->insert_department($data);
+                if ($insert) {
+                    foreach (array_unique($users) as $user) {
+                        $answerable_manager->insert(['department_id' => $insert, 'user_id' => $user]);
+                    }
+                    tkm_flash('دپارتمان «' . esc_html($data['name']) . '» اضافه شد.');
+                } else {
+                    tkm_flash('خطا در افزودن دپارتمان.', 'danger');
+                }
+            }
+
+            wp_safe_redirect($list_url);
+            exit;
+        }
+
+        if (isset($_GET['action'], $_GET['id']) && $_GET['action'] === 'delete') {
+            if (!isset($_GET['delete_department_nonce']) || !wp_verify_nonce($_GET['delete_department_nonce'], 'delete_department') || !current_user_can('manage_options')) {
+                wp_die('متاسفانه نانس شما تایید نشد.', '', ['back_link' => true]);
+            }
+
+            $id = absint($_GET['id']);
+            $self->delete($id);
+            $answerable_manager->delete($id);
+            // Children become top-level departments instead of pointing to a missing parent.
+            $self->wpdb->update($self->table, ['parent' => 0], ['parent' => $id], ['%d'], ['%d']);
+            tkm_flash('دپارتمان حذف شد.', 'info');
+
+            wp_safe_redirect($list_url);
+            exit;
+        }
+    }
+
     public function page()
     {
-
         $answerable_manager = new TKM_Answerable_Mnager();
+        $departments = $this->get_department();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-            if (isset($_POST['add_department_nonce']) && wp_verify_nonce($_POST['add_department_nonce'], 'add_department')) {
-
-                if (isset($_POST['department_id']) && !empty($_POST['department_id'])) {
-                    $department_id = intval($_POST['department_id']);
-                    $update = $this->update($department_id, $_POST);
-
-                    if ($update) {
-                        echo '<div class="alert_message_success">
-                        <p class="message_alert">   بروزرسانی دپارتمان با موفقیت انجام شد</p>
-                    </div>';
-                    } else {
-                        echo '<div class="alert_message_error">
-                        <p class="message_alert">   بروزرسانی دپارتمان با خطا مواجه شد</p>
-                    </div>';
-                    }
-                    wp_redirect(admin_url('admin.php?page=tkm-departments'));
-                    echo '<div class="alert_message_error">
-                    <p class="message_alert">   بروزرسانی دپارتمان با خطا مواجه شد</p>
-                </div>';
-                } else {
-                    $insert = $this->insert_department($_POST);
-
-                    if ($insert) {
-                        if (!empty($_POST['department-answerabel'])) {
-                            foreach ($_POST['department-answerabel'] as $user) {
-                                $answerable_manager->insert(['department_id' => $insert, 'user_id' => $user]);
-                            }
-                        }
-                        echo '<div class="notice notice-success " style="padding: 10px; width:90%"> دپارتمان با موفقیت اضافه شد </div>';
-                    } else {
-                        echo '<div class="notice notice-success " style="padding: 10px; width:90%">خطا در افزودن دپارتمان</div>';
-                    }
-                    wp_redirect(admin_url('admin.php?page=tkm-departments'));
-                }
-            } else {
-                exit('متاسفیم، نانس شما تایید نشد.');
-            }
-        } else {
-
-            if (isset($_GET['action']) && $_GET['action'] == 'delete') {
-
-                if (isset($_GET['delete_department_nonce']) && wp_verify_nonce($_GET['delete_department_nonce'], 'delete_department')) {
-                    $this->delete($_GET['id']);
-                    $answerable_manager->delete($_GET['id']);
-                    echo '<div class="notice notice-success " style="padding: 10px; width:90%">  دپارتمان مورد نظر با موفقیت حذف شد </div>';
-                } else {
-                    echo '<div class="notice notice-success " style="padding: 10px; width:90%"> متاسفانه نانس شما تایید نشد </div>';
-                }
-                wp_redirect(admin_url('admin.php?page=tkm-departments'));
-            } elseif (isset($_GET['action']) && $_GET['action'] == 'edit') {
-                $departments = $this->get_department();
-                $showdepartment = $this->get_a_department($_GET['id']);
-                $answerable = $answerable_manager->get_by_department($showdepartment->ID);
-                include TKM_VIEWS_PATH . 'admin/department/edit.php';
-            } else {
-                $departments = $this->get_department();
-                include TKM_VIEWS_PATH . 'admin/department/main.php';
-            }
+        if (isset($_GET['page']) && $_GET['page'] === 'tkm-my-departments') {
+            include TKM_VIEWS_PATH . 'admin/department/my.php';
+            return;
         }
+
+        if (isset($_GET['action'], $_GET['id']) && $_GET['action'] === 'edit') {
+            $showdepartment = $this->get_a_department(absint($_GET['id']));
+            $answerable = $showdepartment ? $answerable_manager->get_by_department($showdepartment->ID) : [];
+            include TKM_VIEWS_PATH . 'admin/department/edit.php';
+            return;
+        }
+
+        include TKM_VIEWS_PATH . 'admin/department/main.php';
     }
 
     public function get_department()
     {
-        return $this->wpdb->get_results("SELECT * FROM " . $this->table . " ORDER BY position");
+        return $this->wpdb->get_results("SELECT * FROM " . $this->table . " ORDER BY position, ID");
     }
 
     public function get_a_department($id)
@@ -95,43 +120,33 @@ class TKM_Admin_Department_Manager
     {
         $this->wpdb->delete($this->table, ['ID' => $id], ['%d']);
     }
-    public function update($id, $data)
+
+    private function sanitize($data, $id = 0)
     {
-        $data = [
+        $parent = isset($data['parent']) ? absint($data['parent']) : 0;
+        if ($id && $parent === (int) $id) {
+            $parent = 0;
+        }
+
+        return [
             'name' => sanitize_text_field($data['name']),
-            'parent' => isset($data['parent']) ? intval($data['parent']) : 0,
-            'position' => isset($data['position']) ? intval($data['position']) : 1,
+            'parent' => $parent,
+            'position' => isset($data['position']) && $data['position'] !== '' ? intval($data['position']) : 1,
             'description' => isset($data['description']) ? sanitize_textarea_field($data['description']) : null,
         ];
+    }
 
-        $where = ['ID' => (int) $id];
-        $data_format = ['%s', '%d', '%d', '%s'];
-        $where_format = ['%d'];
-
-        return $update_department =  $this->wpdb->update($this->table, $data, $where, $data_format, $where_format);
-
-        if ($update_department) {
-            echo '<div class="notice notice-warning " style="padding: 10px; width:90%"> دپارتمان با موفقیت بروزرسانی شد </div>';
-        }
+    public function update($id, $data)
+    {
+        return $this->wpdb->update($this->table, $this->sanitize($data, $id), ['ID' => (int) $id], ['%s', '%d', '%d', '%s'], ['%d']);
     }
 
     private function insert_department($data)
     {
-        $data = [
-            'name' => sanitize_text_field($data['name']),
-            'parent' => isset($data['parent']) ? intval($data['parent']) : 0,
-            'position' => isset($data['position']) ? intval($data['position']) : 1,
-            'description' => isset($data['description']) ? sanitize_textarea_field($data['description']) : null,
-        ];
-
-        $data_format = ['%s', '%d', '%d', '%s'];
-
-        $insert = $this->wpdb->insert($this->table, $data, $data_format);
+        $insert = $this->wpdb->insert($this->table, $this->sanitize($data), ['%s', '%d', '%d', '%s']);
         return $insert ? $this->wpdb->insert_id : null;
-        if ($insert) {
-            echo '<div class="notice notice-warning " style="padding: 10px; width:90%"> دپارتمان با موفقیت بروزرسانی شد </div>';
-        }
     }
+
     public function get_parent_department()
     {
         return  $this->wpdb->get_results("SELECT * FROM " . $this->table . " WHERE parent = 0 ORDER BY position ");
@@ -141,5 +156,18 @@ class TKM_Admin_Department_Manager
     {
 
         return $this->wpdb->get_results($this->wpdb->prepare("SELECT * FROM " . $this->table . " WHERE parent = %d ORDER BY position ", $parent_id));
+    }
+
+    /**
+     * Ticket counts per department (open vs total) for the overview.
+     */
+    public function ticket_counts()
+    {
+        $rows = $this->wpdb->get_results("SELECT department_id, COUNT(*) AS total, SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) AS open_count FROM {$this->wpdb->prefix}tkm_tickets WHERE status != 'trash' GROUP BY department_id");
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row->department_id] = ['total' => (int) $row->total, 'open' => (int) $row->open_count];
+        }
+        return $counts;
     }
 }

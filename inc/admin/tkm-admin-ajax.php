@@ -11,43 +11,39 @@ class TKM_Admin_Ajax
 
     public function search_users()
     {
-
-        $term =  $_POST['term'];
-        if (!$term) {
-            wp_send_json_error();
+        // Only staff may look users up (this used to be open to any logged-in user).
+        if (!tkm_is_staff() || !check_ajax_referer('tkm_admin_nonce', 'nonce', false)) {
+            wp_send_json([], 403);
         }
-        $args = [
-            'search' => '*' . esc_attr($term) . '*',
-            'search_columns' => ['user_login', 'user_email', 'user_nicname']
-        ];
-        $user_query =  new WP_User_Query($args);
-        $users = $user_query->get_results();
+
+        $term = isset($_POST['term']) ? sanitize_text_field(wp_unslash($_POST['term'])) : '';
+        if ($term === '') {
+            wp_send_json([]);
+        }
+
+        $user_query = new WP_User_Query([
+            'search'         => '*' . $term . '*',
+            'search_columns' => ['user_login', 'user_email', 'user_nicename', 'display_name'],
+            'number'         => 20,
+            'fields'         => ['ID', 'user_login', 'display_name', 'user_email'],
+        ]);
 
         $result = [];
-
-        if (!empty($users)) {
-
-            foreach ($users as $user) {
-
-                $user_login = $user->user_login;
-                $user_id = $user->ID;
-                $result[] = [$user_id, $user_login];
-            }
+        foreach ($user_query->get_results() as $user) {
+            // [id, label] shape kept for backwards compatibility with select2 callers.
+            $result[] = [(int) $user->ID, $user->display_name . ' (' . $user->user_login . ')', $user->user_email];
         }
 
         $this->make_response($result);
     }
+
     public function make_response($result)
     {
-
         if (is_array($result)) {
-
             wp_send_json($result);
-        } else {
-
-            echo $result;
         }
 
+        echo $result;
         wp_die();
     }
 }

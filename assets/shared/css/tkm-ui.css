@@ -333,7 +333,8 @@
 .tkm-ui .tkm-stars input:checked ~ label { color: #fdb022; }
 .tkm-ui .tkm-stars--static { flex-direction: row; }
 .tkm-ui .tkm-stars--static .tkm-icon { color: var(--tkm-border-strong); }
-.tkm-ui .tkm-stars--static .is-on { color: #fdb022; }
+.tkm-ui .tkm-stars--static .is-on, .tkm-ui .tkm-stars--static .is-on .tkm-icon { color: #fdb022; }
+.tkm-ui .tkm-stars--static .is-on .tkm-icon { fill: currentColor; }
 
 /* ───────────────────────── Toasts ───────────────────────── */
 .tkm-toasts { position: fixed; z-index: 100000; bottom: 24px; left: 24px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }

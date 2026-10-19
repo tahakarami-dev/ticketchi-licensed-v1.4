@@ -23,6 +23,7 @@ if (class_exists('CSF')) {
     'menu_title' => 'تیکت چی',
     'menu_slug'  => 'tkm-settings',
     'menu_hidden' => true,
+    'show_sub_menu' => false,
     'framework_title' => 'تیکت چی',
     'theme' => 'light',
     'footer_text' => '',
@@ -521,3 +522,30 @@ if (class_exists('CSF')) {
     )
   ));
 }
+
+/**
+ * Wrap the Codestar settings screen in the Ticketchi admin shell.
+ */
+function tkm_settings_is_screen()
+{
+  return is_admin() && isset($_GET['page']) && $_GET['page'] === 'tkm-settings';
+}
+
+add_action('csf_options_before', function () {
+  if (!tkm_settings_is_screen()) {
+    return;
+  }
+  include TKM_VIEWS_PATH . 'admin/partials/header.php';
+  $tkm_head_title = 'تنظیمات';
+  $tkm_head_desc = 'ظاهر، فرم‌ها، پیامک، پاسخ‌های آماده و سایر قابلیت‌های تیکت‌چی';
+  include TKM_VIEWS_PATH . 'admin/partials/page-head.php';
+  echo '<div class="tkm-settings">';
+});
+
+add_action('csf_options_after', function () {
+  if (!tkm_settings_is_screen()) {
+    return;
+  }
+  echo '</div>';
+  include TKM_VIEWS_PATH . 'admin/partials/footer.php';
+});

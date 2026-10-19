@@ -243,11 +243,12 @@ function tkm_get_user_tickets_by_department($user_id = null)
 
     $results = $wpdb->get_results(
         $wpdb->prepare(
-            "SELECT t.* 
+            "SELECT DISTINCT t.*
              FROM {$wpdb->prefix}tkm_tickets t
-             INNER JOIN {$wpdb->prefix}tkm_departments d ON t.department_id = d.id
-             INNER JOIN {$wpdb->prefix}tkm_users u ON u.department_id = d.id
-             WHERE u.user_id = %d",
+             INNER JOIN {$wpdb->prefix}tkm_departments d ON t.department_id = d.ID
+             INNER JOIN {$wpdb->prefix}tkm_users u ON (u.department_id = d.ID OR u.department_id = d.parent)
+             WHERE u.user_id = %d AND t.status != 'trash'
+             ORDER BY t.reply_date DESC",
             $user_id
         ),
         ARRAY_A

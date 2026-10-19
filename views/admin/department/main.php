@@ -1,137 +1,117 @@
-<div class="main-container">
-    <?php if ($_GET['page'] == 'tkm-departments') : ?>
-        <div class="right_container">
-            <span class="head-title">دپارتمان جدید</span>
-            <form class="department-form" method="post">
-                <?php wp_nonce_field('add_department', 'add_department_nonce', false) ?>
-                <label for="">عنوان دپارتمان <span style="color:#d63638">*</span></label>
-                <input class="department_input" name="name" type="text">
-                <label for="">واحد دپارتمان <span style="color:#d63638">*</span></label>
-                <select class="department_input" name="parent" id="">
-                    <option value="">بدون والد</option>
-                    <?php if (count($departments)): ?>
-                        <?php foreach ($departments as $department): ?>
+<?php
+/**
+ * @var array                         $departments
+ * @var TKM_Admin_Department_Manager  $this
+ * @var TKM_Answerable_Mnager         $answerable_manager
+ */
+defined('ABSPATH') || exit('NO Access');
 
-                            <?php if ($department->parent) {
+$counts = $this->ticket_counts();
+$parents = array_filter($departments, function ($d) {
+    return !(int) $d->parent;
+});
+$children = [];
+foreach ($departments as $d) {
+    if ((int) $d->parent) {
+        $children[(int) $d->parent][] = $d;
+    }
+}
+// Departments whose parent no longer exists are shown as top-level.
+foreach ($children as $parent_id => $list) {
+    $exists = false;
+    foreach ($parents as $p) {
+        if ((int) $p->ID === $parent_id) {
+            $exists = true;
+        }
+    }
+    if (!$exists) {
+        $parents = array_merge($parents, $list);
+        unset($children[$parent_id]);
+    }
+}
 
-                                continue;
-                            } ?>
+$staff_html = function ($department_id) use ($answerable_manager) {
+    $ids = $answerable_manager->get_by_department($department_id);
+    if (!$ids) {
+        return '<span class="tkm-muted tkm-small">بدون کارشناس</span>';
+    }
+    $html = '<span class="tkm-avatars">';
+    foreach (array_slice($ids, 0, 4) as $id) {
+        $html .= tkm_avatar($id, 'sm');
+    }
+    if (count($ids) > 4) {
+        $html .= '<span class="tkm-avatar tkm-avatar--sm tkm-avatar--more">+' . tkm_fa(count($ids) - 4) . '</span>';
+    }
+    return $html . '</span>';
+};
 
-                            <option value="<?php echo esc_attr($department->ID) ?>"><?php echo esc_html($department->name) ?></option>
-
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </select>
-                <label for="">کارمند دپارتمان <span style="color:#d63638">*</span></label>
-                <select class="department_input" name="department-answerabel[]" id="department-answerabel" multiple>
-                    <option value=""></option>
-                </select>
-                <label for="">موقعیت دپارتمان <span style="color:#d63638">*</span></label>
-                <input class="department_input" name="position" type="text">
-                <label for="">توضیح کوتاه دپارتمان <span style="color:#d63638">*</span></label>
-                <textarea class="department_input" name="description" id=""></textarea>
-                <button class="btn-submit-department" name="submit" id="submit" type="submit">افزودن دپارتمان</button>
-            </form>
+$row = function ($department, $is_child = false) use ($counts, $staff_html) {
+    $c = isset($counts[(int) $department->ID]) ? $counts[(int) $department->ID] : ['total' => 0, 'open' => 0];
+    $edit = tkm_admin_url('tkm-departments', ['action' => 'edit', 'id' => $department->ID]);
+    $delete = wp_nonce_url(tkm_admin_url('tkm-departments', ['action' => 'delete', 'id' => $department->ID]), 'delete_department', 'delete_department_nonce');
+    ob_start(); ?>
+    <div class="tkm-dept <?php echo $is_child ? 'tkm-dept--child' : ''; ?>">
+        <span class="tkm-dept__icon"><?php echo tkm_icon($is_child ? 'tag' : 'building', 18); ?></span>
+        <div class="tkm-dept__main">
+            <a class="tkm-dept__name" href="<?php echo esc_url($edit); ?>"><?php echo esc_html($department->name); ?></a>
+            <?php if (trim((string) $department->description) !== '') : ?>
+                <span class="tkm-dept__desc tkm-truncate"><?php echo esc_html($department->description); ?></span>
+            <?php endif; ?>
         </div>
-        <div class="left_container">
-            <span class="head-title">دپارتمان ها</span>
-            <table class="wp-list-table widefat fixed striped table-view-list pages department_table" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th scope="col" id="title" class="manage-column column-title">عنوان</th>
-                        <th scope="col" id="slug" class="manage-column column-slug">واحد</th>
-                        <th scope="col" id="users" class="manage-column column-users">کارمند پاسخگو</th>
-                        <th scope="col" id="status" class="manage-column column-status">موقیعت</th>
-                    </tr>
-                </thead>
-                <tbody id="the-list">
-
-                    <?php if (count($departments)): ?>
-                        <?php foreach ($departments as $department): ?>
-                            <tr>
-                                <td class="title column-title"><?php echo esc_html($department->name) ?>
-
-                                    <div class="row-actions">
-
-                                        <span><a class="edit" href="<?php echo esc_url(admin_url('admin.php?page=tkm-departments&action=edit&id=' . $department->ID)) ?>"> ویرایش </a></span>
-                                        <span><a style="color: red;" class="delete" href="<?php echo wp_nonce_url(admin_url('admin.php?page=tkm-departments&action=delete&id=' . $department->ID), 'delete_department', 'delete_department_nonce') ?>">حذف</a></span>
-
-                                    </div>
-
-                                </td>
-                                <td class="slug column-slug">
-                                    <?php if ($department->parent) {
-
-                                        $parent =   $this->get_a_department($department->parent);
-                                        echo $parent ? $parent->name : '__';
-                                    } else {
-                                        echo '__';
-                                    }
-                                    ?>
-                                </td>
-                                <?php
-                                $answer = new TKM_Answerable_Mnager();
-                                $user_answer_id =   $answer->get_by_department($department->ID);
-                                ?>
-                                <td class="users column-users">
-                                    <?php
-                                    $names = array();
-                                    foreach ($user_answer_id as $id) {
-                                        $user = get_userdata($id);
-                                        if ($user) {
-                                            $names[] = $user->display_name;
-                                        }
-                                    }
-                                    echo implode(', ', $names);
-                                    ?>
-                                </td>
-                                <td class="status column-status"><?php echo esc_html($department->position) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+        <div class="tkm-dept__staff"><?php echo $staff_html($department->ID); ?></div>
+        <a class="tkm-dept__count" href="<?php echo esc_url(tkm_admin_url('tkm-tickets', ['department_id' => $department->ID])); ?>" title="مشاهده تیکت‌ها">
+            <strong class="tkm-num"><?php echo esc_html(tkm_fa($c['total'])); ?></strong> تیکت
+            <?php if ($c['open']) : ?><span class="tkm-badge tkm-badge--plain" style="--c: var(--tkm-success)"><?php echo esc_html(tkm_fa($c['open'])); ?> باز</span><?php endif; ?>
+        </a>
+        <span class="tkm-dept__pos tkm-num" title="ترتیب نمایش"><?php echo esc_html(tkm_fa($department->position)); ?></span>
+        <div class="tkm-dept__actions">
+            <a class="tkm-btn tkm-btn--ghost tkm-btn--sm tkm-btn--icon" href="<?php echo esc_url($edit); ?>" aria-label="ویرایش" title="ویرایش"><?php echo tkm_icon('edit', 15); ?></a>
+            <a class="tkm-btn tkm-btn--ghost tkm-btn--sm tkm-btn--icon tkm-danger-btn" href="<?php echo esc_url($delete); ?>" data-confirm="دپارتمان «<?php echo esc_attr($department->name); ?>» حذف شود؟ زیرمجموعه‌های آن به سطح اول منتقل می‌شوند." aria-label="حذف" title="حذف"><?php echo tkm_icon('trash', 15); ?></a>
         </div>
-    <?php else :  ?>
-        <?Php $user = get_current_user_id();
-        $tickets = tkm_get_user_tickets_by_department($user);
+    </div>
+<?php
+    return ob_get_clean();
+};
+
+include TKM_VIEWS_PATH . 'admin/partials/header.php';
+
+$tkm_head_title = 'دپارتمان‌ها';
+$tkm_head_desc = 'ساختار تیم پشتیبانی، زیرمجموعه‌ها و کارشناسان پاسخگو';
+include TKM_VIEWS_PATH . 'admin/partials/page-head.php';
+?>
+<div class="tkm-ws tkm-ws--reverse">
+    <div class="tkm-ws__main">
+        <section class="tkm-card">
+            <div class="tkm-card__head">
+                <div class="tkm-card__title"><?php echo tkm_icon('layers', 18); ?> همه دپارتمان‌ها <span class="tkm-badge tkm-badge--plain tkm-badge--outline tkm-num"><?php echo esc_html(tkm_fa(count($departments))); ?></span></div>
+            </div>
+            <?php if ($departments) : ?>
+                <div class="tkm-depts">
+                    <?php foreach ($parents as $parent) : ?>
+                        <div class="tkm-dept-group">
+                            <?php echo $row($parent); ?>
+                            <?php foreach (isset($children[(int) $parent->ID]) ? $children[(int) $parent->ID] : [] as $child) : ?>
+                                <?php echo $row($child, true); ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else : ?>
+                <div class="tkm-empty">
+                    <div class="tkm-empty__art"><?php echo tkm_icon('building', 30); ?></div>
+                    <h3 class="tkm-empty__title">هنوز دپارتمانی ندارید</h3>
+                    <p class="tkm-empty__text">اولین دپارتمان را از فرم کنار بسازید تا کاربران بتوانند تیکت ثبت کنند.</p>
+                </div>
+            <?php endif; ?>
+        </section>
+    </div>
+
+    <aside class="tkm-ws__side">
+        <?php
+        $showdepartment = null;
+        $answerable = [];
+        include TKM_VIEWS_PATH . 'admin/department/form.php';
         ?>
-        <div class="left_container">
-            <span class="head-title"> تیکت های دپارتمان من</span>
-            <table class="wp-list-table widefat fixed striped table-view-list pages department_table" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th scope="col" id="title" class="manage-column column-title">عنوان</th>
-                        <th scope="col" id="slug" class="manage-column column-depapartment">دپارتمان</th>
-                        <th scope="col" id="users" class="manage-column column-creator"> ایجاد کننده</th>
-                        <th scope="col" id="status" class="manage-column column-status">وضعیت</th>
-                        <th scope="col" id="priority" class="manage-column column-priority">اولویت</th>
-                        <th scope="col" id="created" class="manage-column column-create-date">تاریخ ثبت</th>
-                        <th scope="col" id="updated" class="manage-column column-reply-date">آخرین پاسخ</th>
-                    </tr>
-                </thead>
-                <tbody id="the-list">
-                    <?php if (count($tickets)): ?>
-                        <?php foreach ($tickets as $ticket): ?>
-                            <tr>
-                                <td class="title column-title"><?php echo esc_html($ticket['title']) ?>
-                                    <div class="row-actions">
-                                        <span><a class="edit" href="<?php echo esc_url(admin_url('admin.php?page=tkm-edit-ticket&id=' . $ticket['ID'])) ?>"> ویرایش </a></span>
-                                    </div>
-                                </td>
-                                <td class="column-depapartment">
-                                    <span><?php echo get_department_html($ticket['department_id']) ?></span>
-                                </td>
-                                <td class="users column-creator"><?php echo get_userdata($ticket['creator_id'])->display_name ?></td>
-                                <td class="status column-status"><span><?php echo get_status_name($ticket['status']) ?></span></td>
-                                <td class="priority column-priority"><span><?php echo get_priority_name($ticket['priority']) ?></span></td>
-                                <td class="create_date column-create_date"><span><?php echo wp_date( get_option('date_format') . ' ' . get_option('time_format'), strtotime($ticket['create_date']) ); ?></span></td>
-                                <td class="reply_date column-reply_date"><span><?php echo wp_date( get_option('date_format') . ' ' . get_option('time_format'), strtotime($ticket['reply_date']) ); ?></span></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    <?php endif; ?>
-    <?php
+    </aside>
+</div>
+<?php include TKM_VIEWS_PATH . 'admin/partials/footer.php'; ?>

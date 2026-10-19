@@ -8,9 +8,15 @@ class TKM_ASSETS
 
     public function __construct()
     {
-        add_action('wp_enqueue_scripts', [$this, 'register_front'], 5);
+        add_action('wp_enqueue_scripts', [__CLASS__, 'register_front'], 5);
         add_action('wp_enqueue_scripts', [$this, 'front_assets'], 999);
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
+        add_filter('admin_body_class', [$this, 'admin_body_class']);
+    }
+
+    public function admin_body_class($classes)
+    {
+        return self::is_plugin_admin_page() ? $classes . ' tkm-admin-page ' : $classes;
     }
 
     public static function is_plugin_admin_page()
@@ -48,11 +54,20 @@ class TKM_ASSETS
         return preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/', $value) ? $value : null;
     }
 
-    public function register_front()
+    /**
+     * Idempotent: block themes render shortcodes / endpoints before
+     * wp_enqueue_scripts fires, so views may need the handles earlier.
+     */
+    public static function register_front()
     {
+        if (wp_style_is('tkm-front', 'registered')) {
+            return;
+        }
+
         wp_register_style('tkm-ui', TKM_URL . self::SHARED . 'css/tkm-ui.css', [], TKM_VER);
         wp_register_style('tkm-front', TKM_FRONT_ASSETS . 'css/tkm-front.css', ['tkm-ui'], TKM_VER);
         wp_register_script('tkm-front', TKM_FRONT_ASSETS . 'js/tkm-front.js', ['jquery'], TKM_VER, true);
+        wp_add_inline_style('tkm-front', self::brand_css());
 
         wp_localize_script('tkm-front', 'TKM_DATA_AJAX', [
             'ajax_url' => admin_url('admin-ajax.php'),
@@ -89,12 +104,8 @@ class TKM_ASSETS
 
     public static function enqueue_front()
     {
-        if (wp_style_is('tkm-front', 'enqueued')) {
-            return;
-        }
-
+        self::register_front();
         wp_enqueue_style('tkm-front');
-        wp_add_inline_style('tkm-front', self::brand_css());
         wp_enqueue_script('tkm-front');
     }
 

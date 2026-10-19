@@ -11,6 +11,7 @@ PORT="${PORT:-8089}"
 export WP_CLI="php ${WP_CLI_PHAR:-$ENV_DIR/wp-cli.phar} --path=$SITE --allow-root"
 export NODE_PATH="${NODE_PATH:-$(npm root -g)}"
 export BASE_URL="http://localhost:$PORT"
+export SITE_DIR="$SITE"
 status=0
 
 echo "== PHP lint"
@@ -38,7 +39,7 @@ trap 'kill $SERVER 2>/dev/null' EXIT
 sleep 1
 : > "$SITE/debug.log"
 
-for suite in front admin edge; do
+for suite in front admin edge install; do
   echo "== e2e: $suite"
   node "$REPO/tests/e2e/$suite.test.cjs" || status=1
 done

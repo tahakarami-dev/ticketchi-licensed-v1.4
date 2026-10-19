@@ -549,7 +549,9 @@ if (class_exists('CSF')) {
   CSF::createSection($prefix, array(
     'title'  => 'پایگاه دانش',
     'fields' => array(
-      array('id' => 'kb_enable', 'type' => 'switcher', 'title' => 'پیشنهاد مقاله', 'label' => 'هنگام نوشتن تیکت، مقاله‌های مرتبط به مشتری پیشنهاد شود', 'default' => true),
+      array('type' => 'subheading', 'content' => 'مقاله‌ها را از منوی «پایگاه دانش» در پیشخوان بنویسید و صفحه مرکز راهنما را با شورت‌کد [ticketchi_kb] بسازید.'),
+      array('id' => 'kb_enable', 'type' => 'switcher', 'title' => 'پایگاه دانش', 'label' => 'مقاله‌های راهنما و جستجوی مرکز راهنما فعال باشد', 'default' => true),
+      array('id' => 'kb_suggest', 'type' => 'switcher', 'title' => 'پیشنهاد مقاله', 'label' => 'هنگام نوشتن تیکت، مقاله‌های مرتبط به مشتری پیشنهاد شود', 'default' => true, 'dependency' => array('kb_enable', '==', 'true')),
       array('id' => 'kb_slug', 'type' => 'text', 'title' => 'نامک آدرس مقاله‌ها', 'default' => 'help', 'desc' => 'مثلا example.com/help/نام-مقاله — پس از تغییر، یک‌بار «تنظیمات › پیوندهای یکتا» را ذخیره کنید.'),
       array('type' => 'content', 'content' => '<p>مقاله‌ها را از منوی «پایگاه دانش» در پیشخوان بنویسید. برای نمایش مرکز راهنما در یک صفحه از شورت‌کد <code>[ticketchi_kb]</code> استفاده کنید.</p>'),
     ),

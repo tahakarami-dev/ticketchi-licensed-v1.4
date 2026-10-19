@@ -540,5 +540,38 @@
             });
     });
 
+    /* ───────── Help-center suggestions while writing a ticket ───────── */
+    (function () {
+        var url = CFG.kb;
+        var $box = $('[data-kb-suggest]');
+        if (!url || !$box.length) return;
+        var $list = $box.find('[data-kb-list]');
+        var timer = null, last = '', xhr = null;
+
+        function query() {
+            var title = $.trim($('#title-ticket').val() || '');
+            var body = $.trim($('#ticket-content').val() || '').split(/\s+/).slice(0, 12).join(' ');
+            return $.trim(title || body);
+        }
+        function run() {
+            var q = query();
+            if (q.length < 3 || q === last) return;
+            last = q;
+            if (xhr) xhr.abort();
+            xhr = $.getJSON(url, { q: q }).done(function (items) {
+                if (!items || !items.length) { $box.prop('hidden', true); return; }
+                $list.html($.map(items, function (a) {
+                    return '<li><a href="' + esc(a.url) + '" target="_blank" rel="noopener"><strong>' + esc(a.title) + '</strong>' +
+                        (a.excerpt ? '<span>' + esc(a.excerpt) + '</span>' : '') + '</a></li>';
+                }).join(''));
+                $box.prop('hidden', false);
+            });
+        }
+        $(document).on('input', '#title-ticket, #ticket-content', function () {
+            clearTimeout(timer);
+            timer = setTimeout(run, 450);
+        });
+    })();
+
     window.TKM_UI = { toast: toast };
 })(jQuery);

@@ -72,6 +72,7 @@ class TKM_ASSETS
         wp_localize_script('tkm-front', 'TKM_DATA_AJAX', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce('tkm_ajax_nonce'),
+            'kb'       => \Ticketchi\Kb\KnowledgeBase::enabled() && \Ticketchi\Support\Settings::bool('kb_suggest', true) ? esc_url_raw(rest_url('ticketchi/v1/kb/search')) : '',
             'upload'   => [
                 'multiple'    => TKM_Upload_File::is_multiple(),
                 'max_files'   => TKM_Upload_File::max_files(),

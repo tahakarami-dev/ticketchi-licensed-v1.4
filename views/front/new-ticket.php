@@ -194,6 +194,11 @@ $tkm_tools_id = 'tkm-new';
                         <textarea class="tkm-textarea" id="ticket-content" name="content" rows="7" placeholder="مشکل را شرح دهید؛ مراحلی که انجام دادید، پیام خطا و هر جزئیاتی که کمک می‌کند…" data-autogrow></textarea>
                     </div>
 
+                    <div class="tkm-field tkm-col-span tkm-kb-suggest" data-kb-suggest hidden aria-live="polite">
+                        <div class="tkm-kb-suggest__head"><?php echo tkm_icon('sparkles', 16); ?> شاید این راهنماها مشکل را همین حالا حل کنند</div>
+                        <ul class="tkm-kb-suggest__list" data-kb-list></ul>
+                    </div>
+
                     <div class="tkm-field tkm-col-span">
                         <?php include TKM_VIEWS_PATH . 'front/partials/composer-tools.php'; ?>
                     </div>

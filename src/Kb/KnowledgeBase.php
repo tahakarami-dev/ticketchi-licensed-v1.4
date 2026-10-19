@@ -82,19 +82,25 @@ final class KnowledgeBase
             'orderby'        => 'relevance',
         ]);
 
-        // Fall back to individual words for short multi-word queries.
+        // WordPress ANDs every word; a customer's sentence rarely matches that way.
+        // Fall back to scoring articles by how many meaningful words they contain.
         if (!$posts) {
-            $words = array_filter(preg_split('/\s+/u', $query), function ($w) {
-                return mb_strlen($w) >= 3;
-            });
-            if ($words) {
-                $posts = get_posts([
-                    'post_type'      => self::TYPE,
-                    'post_status'    => 'publish',
-                    's'              => implode(' ', array_slice($words, 0, 3)),
-                    'posts_per_page' => $limit,
-                ]);
+            $stop = ['برای', 'این', 'که', 'با', 'از', 'به', 'در', 'را', 'های', 'هم', 'یک', 'من', 'است', 'مشکل', 'سلام', 'لطفا', 'دارم', 'نمی', 'شود', 'کنم'];
+            $words = array_values(array_unique(array_filter(preg_split('/[\s\x{200c}،,.؟?!]+/u', $query), function ($w) use ($stop) {
+                return mb_strlen($w) >= 3 && !in_array($w, $stop, true);
+            })));
+            $scores = [];
+            $found = [];
+            foreach (array_slice($words, 0, 6) as $word) {
+                foreach (get_posts(['post_type' => self::TYPE, 'post_status' => 'publish', 's' => $word, 'posts_per_page' => 10]) as $post) {
+                    $scores[$post->ID] = ($scores[$post->ID] ?? 0) + (mb_stripos($post->post_title, $word) !== false ? 2 : 1);
+                    $found[$post->ID] = $post;
+                }
             }
+            arsort($scores);
+            $posts = array_map(function ($id) use ($found) {
+                return $found[$id];
+            }, array_slice(array_keys($scores), 0, $limit));
         }
 
         return array_map([__CLASS__, 'card'], $posts);

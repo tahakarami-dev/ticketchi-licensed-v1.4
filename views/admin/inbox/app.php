@@ -34,6 +34,7 @@ include TKM_VIEWS_PATH . 'admin/partials/header.php';
             <div class="tkm-ib-list__tools">
                 <label class="tkm-ib-checkall" title="انتخاب همه"><input type="checkbox" data-check-all aria-label="انتخاب همه"></label>
                 <span class="tkm-ib-list__title" data-list-title>تیکت‌ها</span>
+                <select class="tkm-select tkm-select--sm tkm-ib-scope" data-scope-select aria-label="نما"></select>
                 <span class="tkm-badge tkm-badge--plain tkm-badge--outline tkm-num" data-total>—</span>
                 <span class="tkm-grow"></span>
                 <select class="tkm-select tkm-select--sm" data-filter="priority" aria-label="اولویت">

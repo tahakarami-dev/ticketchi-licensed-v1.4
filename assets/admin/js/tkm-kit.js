@@ -340,9 +340,10 @@
         });
         el.addEventListener('click', function (e) { if (e.target.hasAttribute('data-cmdk-close')) close(); });
         document.addEventListener('keydown', function (e) {
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.code === 'KeyK')) { e.preventDefault(); el.hidden ? open() : close(); }
-            else if (e.key === 'Escape' && !el.hidden) { e.preventDefault(); close(); }
-        });
+            // Capture phase + stopImmediatePropagation: wp-admin's own command menu also listens for Ctrl+K.
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.code === 'KeyK')) { e.preventDefault(); e.stopImmediatePropagation(); el.hidden ? open() : close(); }
+            else if (e.key === 'Escape' && !el.hidden) { e.preventDefault(); e.stopImmediatePropagation(); close(); }
+        }, true);
         document.querySelectorAll('[data-cmdk-open]').forEach(function (b) { b.addEventListener('click', open); });
         return { open: open, close: close };
     }

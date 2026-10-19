@@ -101,7 +101,7 @@
 /* ═════════════ Inbox ═════════════ */
 .tkm-ui .tkm-inbox {
   --nav-w: 236px; --list-w: 380px; --side-w: 320px;
-  display: grid; grid-template-columns: var(--nav-w) var(--list-w) minmax(0, 1fr);
+  display: grid; grid-template-columns: var(--nav-w) var(--list-w) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
   height: calc(100vh - 32px - 64px); min-height: 520px; overflow: hidden;
   background: var(--tkm-surface);
 }
@@ -139,6 +139,7 @@
 .tkm-ui .tkm-ib-list__tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .tkm-ui .tkm-ib-list__title { font-weight: 700; font-size: var(--tkm-fs-sm); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tkm-ui .tkm-ib-list__tools .tkm-select--sm { height: 30px; min-height: 30px; font-size: 12px; padding-top: 0; padding-bottom: 0; padding-right: 10px; padding-left: 28px; background-position: left 8px center; width: auto; }
+.tkm-ui .tkm-ib-scope { display: none; }
 .tkm-ui .tkm-ib-checkall { display: grid; place-items: center; width: 22px; }
 .tkm-ui .tkm-ib-bulk { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px; border-radius: 10px; background: var(--tkm-primary-soft); font-size: var(--tkm-fs-xs); font-weight: 700; color: var(--tkm-primary); animation: tkm-pop .16s var(--tkm-ease) both; }
 .tkm-ui .tkm-ib-bulk[hidden] { display: none; }
@@ -193,7 +194,7 @@
 .tkm-ui .tkm-ib-convo__sub .tkm-badge { height: 22px; }
 .tkm-ui .tkm-ib-convo__actions { display: flex; align-items: center; gap: 6px; flex: none; }
 .tkm-ui .tkm-ib-side-toggle { display: none; }
-.tkm-ui .tkm-ib-convo__body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--side-w); }
+.tkm-ui .tkm-ib-convo__body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--side-w); grid-template-rows: minmax(0, 1fr); }
 .tkm-ui .tkm-ib-convo__main { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 
 .tkm-ui .tkm-ib-thread { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 14px; }
@@ -238,7 +239,7 @@
 .tkm-ui .tkm-ib-composer__input::placeholder { color: var(--tkm-text-3); }
 .tkm-ui .tkm-ib-composer__files { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px; }
 .tkm-ui .tkm-ib-composer__files:empty { display: none; }
-.tkm-ui .tkm-ib-composer__bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--tkm-border); }
+.tkm-ui .tkm-ib-composer__bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border-top: 1px solid var(--tkm-border); }
 .tkm-ui .tkm-ib-composer__bar label.tkm-btn { cursor: pointer; }
 .tkm-ui .tkm-btn--note { background: #d97706; border-color: #d97706; }
 .tkm-ui .tkm-btn--note:hover { background: #b45309; border-color: #b45309; }
@@ -340,13 +341,19 @@
 
 /* responsive */
 @media (max-width: 1500px) {
-  .tkm-ui .tkm-inbox { --list-w: 340px; --side-w: 290px; }
+  .tkm-ui .tkm-inbox { --list-w: 330px; --side-w: 280px; --nav-w: 216px; }
+  .tkm-ui .tkm-ib-canned__label { display: none; }
+  .tkm-ui.tkm-admin .tkm-brand__text { display: none; }
+  .tkm-ui .tkm-cmdk-trigger { min-width: 0; }
+  .tkm-ui .tkm-cmdk-trigger > span { display: none; }
+  .tkm-ui .tkm-topbar { gap: 16px; padding: 0 20px; }
 }
 @media (max-width: 1320px) {
   .tkm-ui .tkm-inbox { --nav-w: 0px; }
   .tkm-ui .tkm-ib-nav { display: none; }
   .tkm-ui .tkm-inbox { grid-template-columns: var(--list-w) minmax(0, 1fr); }
-  .tkm-ui .tkm-ib-views-mobile { display: block; }
+  .tkm-ui .tkm-ib-scope { display: block; max-width: 170px; }
+  .tkm-ui .tkm-ib-list__title { display: none; }
 }
 @media (max-width: 1180px) {
   .tkm-ui .tkm-ib-convo__body { grid-template-columns: minmax(0, 1fr); position: relative; }
@@ -367,4 +374,8 @@
   .tkm-ui .tkm-ib-convo__head { padding: 10px 12px; }
   .tkm-ui .tkm-ib-msg > .tkm-avatar { display: none; }
   .tkm-ui .tkm-cmdk-trigger { min-width: 0; padding: 0 10px; }
+  .tkm-ui .tkm-cmdk-trigger .tkm-kbd { display: none; }
+  .tkm-ui .tkm-ib-composer__tabs .tkm-kbd, .tkm-ui .tkm-ib-canned__label { display: none; }
+  .tkm-ui .tkm-ib-canned__menu { width: min(340px, calc(100vw - 40px)); }
+  .tkm-ui .tkm-ib-convo__sub time { display: none; }
 }

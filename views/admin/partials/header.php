@@ -16,7 +16,7 @@ $tkm_nav = [
     'tkm-departments' => ['label' => 'تیم و دپارتمان‌ها', 'icon' => 'users', 'manage' => true],
     'tkm-settings'    => ['label' => 'تنظیمات', 'icon' => 'settings', 'manage' => true],
 ];
-?>?>
+?>
 <div class="tkm-ui tkm-admin <?php echo esc_attr($tkm_shell_class); ?>" data-theme="light" id="tkm-admin">
     <script>
         try {

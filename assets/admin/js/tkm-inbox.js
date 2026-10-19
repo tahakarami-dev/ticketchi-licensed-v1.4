@@ -81,6 +81,23 @@
         els.tags.innerHTML = m.tags.length ? m.tags.map(function (t) {
             return '<a href="#/tag/' + t.id + '" class="tkm-ib-view tkm-ib-view--tag' + (+state.scope.tag === t.id ? ' is-active' : '') + '"><span class="tkm-dot" style="--c:' + esc(t.color) + '"></span><span>' + esc(t.name) + '</span>' + (t.count ? '<span class="tkm-ib-count tkm-ib-count--muted tkm-num">' + fa(t.count) + '</span>' : '') + '</a>';
         }).join('') : '<p class="tkm-ib-none">هنوز برچسبی ساخته نشده؛ از بخش جزئیات تیکت اضافه کنید.</p>';
+
+        // Compact scope picker for narrow screens where the sidebar is hidden.
+        var current = '#' + lastScopeHash();
+        var opt = function (hash, label) { return '<option value="' + hash + '"' + (hash === current ? ' selected' : '') + '>' + esc(label) + '</option>'; };
+        var html = '<optgroup label="نماها">' + VIEWS.map(function (v) {
+            return opt('#/view/' + v.key, v.label + (counts[v.key] ? ' (' + fa(counts[v.key]) + ')' : ''));
+        }).join('') + '</optgroup>';
+        if (m.departments.length) {
+            html += '<optgroup label="دپارتمان‌ها">' + m.departments.map(function (d) {
+                return opt('#/department/' + d.id, d.name) + d.children.map(function (c) { return opt('#/department/' + c.id, '— ' + c.name); }).join('');
+            }).join('') + '</optgroup>';
+        }
+        if (m.tags.length) {
+            html += '<optgroup label="برچسب‌ها">' + m.tags.map(function (t) { return opt('#/tag/' + t.id, t.name); }).join('') + '</optgroup>';
+        }
+        if (state.scope.customer) html = opt(current, listTitle()) + html;
+        $('[data-scope-select]').innerHTML = html;
     }
 
     function depLink(d, child) {
@@ -424,7 +441,7 @@
             '<div class="tkm-ib-composer__bar">' +
                 '<label class="tkm-btn tkm-btn--ghost tkm-btn--icon tkm-btn--sm" title="پیوست فایل' + (up.hint ? ' — ' + esc(up.hint) : '') + '">' + icon('paperclip', 17) +
                     '<input type="file" class="tkm-sr" data-composer-file' + (up.multiple ? ' multiple' : '') + (up.accept ? ' accept="' + esc(up.accept) + '"' : '') + '></label>' +
-                (canned.length ? '<div class="tkm-ib-canned"><button type="button" class="tkm-btn tkm-btn--ghost tkm-btn--sm" data-canned-toggle aria-haspopup="true">' + icon('sparkles', 15) + 'پاسخ‌های آماده</button>' +
+                (canned.length ? '<div class="tkm-ib-canned"><button type="button" class="tkm-btn tkm-btn--ghost tkm-btn--sm" data-canned-toggle aria-haspopup="true">' + icon('sparkles', 15) + '<span class="tkm-ib-canned__label">پاسخ‌های آماده</span></button>' +
                     '<div class="tkm-popover tkm-ib-canned__menu" data-canned-menu hidden>' + canned.map(function (c, i) {
                         return '<button type="button" data-canned="' + i + '"><strong>' + esc(c.title) + '</strong><span>' + esc(c.text.slice(0, 90)) + '</span></button>';
                     }).join('') + '</div></div>' : '') +
@@ -835,6 +852,7 @@
             loadList();
             return;
         }
+        if (t.matches('[data-scope-select]')) { location.hash = t.value.replace(/^#/, ''); return; }
         if (t.matches('[data-bulk-assign]') && t.value !== '') { bulk('assign', +t.value); t.value = ''; return; }
         if (t.matches('[data-bulk-status]') && t.value) { bulk('status', t.value); t.value = ''; return; }
         if (t.matches('[data-prop]')) {

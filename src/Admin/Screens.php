@@ -60,6 +60,10 @@ final class Screens
             'csv'      => wp_nonce_url(admin_url('admin-post.php?action=tkm_reports_csv'), 'tkm_reports_csv'),
         ]);
 
+        // Our palette owns Ctrl/⌘+K on Ticketchi screens.
+        wp_dequeue_script('wp-core-commands');
+        wp_dequeue_style('wp-commands');
+
         wp_enqueue_style('tkm-app', TKM_ADMIN_ASSETS . 'css/tkm-app.css', ['tkm-admin'], TKM_VER);
         wp_enqueue_script('tkm-kit', TKM_ADMIN_ASSETS . 'js/tkm-kit.js', ['tkm-main'], TKM_VER, true);
 

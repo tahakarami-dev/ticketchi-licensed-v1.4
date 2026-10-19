@@ -70,12 +70,12 @@ final class Customers
 
             $profile['woocommerce'] = [
                 'orders'      => $count,
-                'total_spent' => wp_strip_all_tags(wc_price($spent)),
+                'total_spent' => html_entity_decode(wp_strip_all_tags(wc_price($spent)), ENT_QUOTES, 'UTF-8'),
                 'recent'      => array_map(function ($order) {
                     return [
                         'id'     => $order->get_id(),
                         'number' => $order->get_order_number(),
-                        'total'  => wp_strip_all_tags($order->get_formatted_order_total()),
+                        'total'  => html_entity_decode(wp_strip_all_tags($order->get_formatted_order_total()), ENT_QUOTES, 'UTF-8'),
                         'status' => wc_get_order_status_name($order->get_status()),
                         'date'   => $order->get_date_created() ? $order->get_date_created()->date('c') : null,
                         'url'    => $order->get_edit_order_url(),

@@ -81,6 +81,7 @@ $tkm_nav = [
                         <strong><?php echo esc_html($tkm_me->display_name); ?></strong>
                         <span class="tkm-ltr"><?php echo esc_html($tkm_me->user_email); ?></span>
                     </div>
+                    <button type="button" data-avatar-open><?php echo tkm_icon('user', 16); ?> تغییر آواتار</button>
                     <a href="<?php echo esc_url(admin_url()); ?>"><?php echo tkm_icon('home', 16); ?> پیشخوان وردپرس</a>
                     <a href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener"><?php echo tkm_icon('external', 16); ?> نمایش سایت</a>
                     <a href="<?php echo esc_url(get_edit_profile_url($tkm_me->ID)); ?>"><?php echo tkm_icon('user', 16); ?> ویرایش پروفایل</a>

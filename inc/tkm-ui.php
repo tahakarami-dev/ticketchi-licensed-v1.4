@@ -263,13 +263,7 @@ function tkm_priority_badge($priority)
  */
 function tkm_avatar($user_id, $size = '', $extra_class = '')
 {
-    $user = $user_id ? get_userdata($user_id) : false;
-    $name = $user ? $user->display_name : 'کاربر';
-    $initial = function_exists('mb_substr') ? mb_substr(trim($name), 0, 1) : substr(trim($name), 0, 1);
-    $hue = $user_id ? (crc32((string) $user_id) % 360) : 220;
-    $class = 'tkm-avatar' . ($size ? ' tkm-avatar--' . $size : '') . ($extra_class ? ' ' . $extra_class : '');
-
-    return '<span class="' . esc_attr($class) . '" style="--h:' . (int) $hue . '" title="' . esc_attr($name) . '" aria-hidden="true">' . esc_html($initial) . '</span>';
+    return \Ticketchi\Support\Avatars::html($user_id, $size, $extra_class);
 }
 
 function tkm_user_name($user_id, $fallback = 'کاربر حذف‌شده')

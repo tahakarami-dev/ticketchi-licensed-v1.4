@@ -83,6 +83,12 @@ final class Api
             ['methods' => 'DELETE', 'callback' => [__CLASS__, 'automation_delete'], 'permission_callback' => $manage, 'args' => $id],
         ]);
 
+        register_rest_route(self::NS, '/me/avatar', [
+            ['methods' => 'GET', 'callback' => [__CLASS__, 'my_avatar'], 'permission_callback' => $view],
+            ['methods' => 'POST', 'callback' => [__CLASS__, 'my_avatar_save'], 'permission_callback' => $view],
+            ['methods' => 'DELETE', 'callback' => [__CLASS__, 'my_avatar_reset'], 'permission_callback' => $view],
+        ]);
+
         register_rest_route(self::NS, '/settings', [
             ['methods' => 'GET', 'callback' => [__CLASS__, 'settings'], 'permission_callback' => $manage],
             ['methods' => 'POST', 'callback' => [__CLASS__, 'settings_save'], 'permission_callback' => $manage],
@@ -457,6 +463,43 @@ final class Api
     {
         Engine::delete((int) $r['id']);
         return self::automations();
+    }
+
+    /* ───────────── Avatar ───────────── */
+
+    public static function my_avatar()
+    {
+        $user = get_current_user_id();
+        return [
+            'current' => \Ticketchi\Support\Avatars::data($user),
+            'preset'  => (string) get_user_meta($user, \Ticketchi\Support\Avatars::META_PRESET, true),
+            'upload'  => (bool) get_user_meta($user, \Ticketchi\Support\Avatars::META_UPLOAD, true),
+            'presets' => array_map(function ($id) {
+                return ['id' => $id, 'url' => \Ticketchi\Support\Avatars::preset_url($id)];
+            }, \Ticketchi\Support\Avatars::presets()),
+        ];
+    }
+
+    /** {preset: "agent-03"} as JSON, or a multipart «file». */
+    public static function my_avatar_save(WP_REST_Request $r)
+    {
+        $user = get_current_user_id();
+        $files = $r->get_file_params();
+        if (!empty($files['file'])) {
+            $result = \Ticketchi\Support\Avatars::upload($user, $files['file']);
+        } else {
+            $result = \Ticketchi\Support\Avatars::set_preset($user, sanitize_key((string) $r->get_param('preset')));
+        }
+        if (is_wp_error($result)) {
+            return self::error($result);
+        }
+        return self::my_avatar();
+    }
+
+    public static function my_avatar_reset()
+    {
+        \Ticketchi\Support\Avatars::reset(get_current_user_id());
+        return self::my_avatar();
     }
 
     /* ───────────── Settings ───────────── */

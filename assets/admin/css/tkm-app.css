@@ -105,8 +105,10 @@
 .tkm-ui .tkm-usermenu__who { display: grid; gap: 2px; padding: 10px 12px 12px; margin-bottom: 4px; border-bottom: 1px solid var(--tkm-border); }
 .tkm-ui .tkm-usermenu__who strong { font-size: var(--tkm-fs-sm); }
 .tkm-ui .tkm-usermenu__who span { font-size: 12px; color: var(--tkm-text-3); overflow: hidden; text-overflow: ellipsis; }
-.tkm-ui .tkm-usermenu__panel a { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border-radius: 9px; font-size: var(--tkm-fs-sm); color: var(--tkm-text-2) !important; }
-.tkm-ui .tkm-usermenu__panel a:hover { background: var(--tkm-surface-2); color: var(--tkm-text) !important; }
+.tkm-ui .tkm-usermenu__panel button { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; }
+.tkm-ui .tkm-usermenu__panel button:focus-visible { outline: 2px solid var(--tkm-primary); }
+.tkm-ui .tkm-usermenu__panel :is(a, button) { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border-radius: 9px; font-size: var(--tkm-fs-sm); color: var(--tkm-text-2) !important; }
+.tkm-ui .tkm-usermenu__panel :is(a, button):hover { background: var(--tkm-surface-2); color: var(--tkm-text) !important; }
 .tkm-ui .tkm-usermenu__panel a.is-danger { color: var(--tkm-danger) !important; }
 body.tkm-admin-page #wpbody-content > .notice:not(.notice-error), body.tkm-admin-page #wpbody-content > .updated, body.tkm-admin-page .update-nag { display: none !important; }
 @media (max-width: 782px) {
@@ -164,7 +166,7 @@ body.tkm-admin-page #wpbody-content > .notice:not(.notice-error), body.tkm-admin
 .tkm-ui .tkm-ib-bulk { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px; border-radius: 10px; background: var(--tkm-primary-soft); font-size: var(--tkm-fs-xs); font-weight: 700; color: var(--tkm-primary); animation: tkm-pop .16s var(--tkm-ease) both; }
 .tkm-ui .tkm-ib-bulk[hidden] { display: none; }
 .tkm-ui .tkm-ib-bulk .tkm-select--sm { height: 30px; min-height: 30px; font-size: 12px; padding-top: 0; padding-bottom: 0; width: auto; padding-right: 8px; padding-left: 26px; background-position: left 6px center; }
-.tkm-ui .tkm-ib-bulk .tkm-btn--sm { height: 30px; padding: 0 10px; font-size: 12px; }
+.tkm-ui .tkm-ib-bulk .tkm-btn--sm { --b-h: 30px; --b-px: 10px; --b-fs: 12px; }
 
 .tkm-ui .tkm-ib-items { flex: 1; overflow-y: auto; overscroll-behavior: contain; outline: none; }
 .tkm-ui .tkm-ib-item {
@@ -261,8 +263,7 @@ body.tkm-admin-page #wpbody-content > .notice:not(.notice-error), body.tkm-admin
 .tkm-ui .tkm-ib-composer__files:empty { display: none; }
 .tkm-ui .tkm-ib-composer__bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border-top: 1px solid var(--tkm-border); }
 .tkm-ui .tkm-ib-composer__bar label.tkm-btn { cursor: pointer; }
-.tkm-ui .tkm-btn--note { background: #d97706; border-color: #d97706; }
-.tkm-ui .tkm-btn--note:hover { background: #b45309; border-color: #b45309; }
+.tkm-ui .tkm-btn--note { --b-bg: #d97706; --b-bg-h: #b45309; --b-fg: #fff; --b-bd: transparent; }
 .tkm-ui .tkm-ib-canned { position: relative; }
 .tkm-ui .tkm-ib-canned__menu { bottom: calc(100% + 8px); right: 0; width: 340px; max-height: 320px; overflow: auto; }
 .tkm-ui .tkm-ib-canned__menu button { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 2px; width: 100%; padding: 9px 10px; border-radius: 8px; }
@@ -639,8 +640,7 @@ html.tkm-lock, html.tkm-lock body { overflow: hidden; }
 .tkm-ui .tkm-st-savebar[hidden] { display: none; }
 @keyframes tkm-savebar-in { from { opacity: 0; transform: translate(-50%, 16px); } }
 .tkm-ui .tkm-st-savebar__dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, .25); }
-.tkm-ui .tkm-st-savebar .tkm-btn--ghost { color: color-mix(in oklab, var(--tkm-surface) 75%, transparent) !important; }
-.tkm-ui .tkm-st-savebar .tkm-btn--ghost:hover { background: rgba(255, 255, 255, .08); color: var(--tkm-surface) !important; }
+.tkm-ui .tkm-st-savebar .tkm-btn--ghost { --b-fg: color-mix(in oklab, var(--tkm-surface) 75%, transparent); --b-fg-h: var(--tkm-surface); --b-bg-h: rgba(255, 255, 255, .08); }
 .tkm-ui .tkm-st-savebar .tkm-kbd { background: transparent; border-color: rgba(255, 255, 255, .35); color: rgba(255, 255, 255, .8); height: 18px; font-size: 10px; }
 
 @media (max-width: 1100px) {
@@ -656,3 +656,19 @@ html.tkm-lock, html.tkm-lock body { overflow: hidden; }
   .tkm-ui .tkm-st-cols--2, .tkm-ui .tkm-st-cols--3 { grid-template-columns: 1fr; }
   .tkm-ui .tkm-st-savebar .tkm-kbd { display: none; }
 }
+
+/* ═════════════ Avatar dialog ═════════════ */
+.tkm-ui .tkm-avmodal__dialog { width: min(520px, calc(100vw - 32px)); }
+.tkm-ui .tkm-avmodal__body { display: grid; gap: 16px; margin-top: 16px; transition: opacity var(--tkm-dur); }
+.tkm-ui .tkm-avmodal__body.is-busy { opacity: .55; pointer-events: none; }
+.tkm-ui .tkm-avmodal__current { display: flex; align-items: center; gap: 18px; padding: 16px; border-radius: var(--tkm-r); background: var(--tkm-surface-2); border: 1px solid var(--tkm-border); }
+.tkm-ui .tkm-avmodal__current > div { display: grid; gap: 6px; justify-items: start; }
+.tkm-ui .tkm-avmodal__current label.tkm-btn { cursor: pointer; }
+.tkm-ui .tkm-avmodal__label { font-size: var(--tkm-fs-sm); font-weight: 600; color: var(--tkm-text-2); }
+.tkm-ui .tkm-avmodal__grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.tkm-ui .tkm-avmodal__opt { all: unset; box-sizing: border-box; cursor: pointer; aspect-ratio: 1; border-radius: 50%; padding: 3px; border: 2px solid transparent; transition: border-color var(--tkm-dur), transform var(--tkm-dur); }
+.tkm-ui .tkm-avmodal__opt img { display: block; width: 100%; height: 100%; border-radius: 50%; }
+.tkm-ui .tkm-avmodal__opt:hover { transform: translateY(-2px); }
+.tkm-ui .tkm-avmodal__opt.is-active { border-color: var(--tkm-primary); }
+.tkm-ui .tkm-avmodal__opt:focus-visible { outline: 2px solid var(--tkm-primary); outline-offset: 2px; }
+@media (max-width: 480px) { .tkm-ui .tkm-avmodal__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

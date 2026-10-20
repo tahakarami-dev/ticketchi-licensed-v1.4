@@ -10,7 +10,6 @@
 .tkm-ui.tkm-app :where(ul, ol) { list-style: none; }
 .tkm-ui.tkm-app label { display: inline; font-weight: inherit; margin: 0; }
 .tkm-ui.tkm-app a { box-shadow: none; text-decoration: none; }
-.tkm-ui.tkm-app .tkm-btn.tkm-btn { min-height: 0; line-height: 1; letter-spacing: normal; text-shadow: none; }
 .tkm-ui.tkm-app .tkm-input.tkm-input,
 .tkm-ui.tkm-app .tkm-select.tkm-select,
 .tkm-ui.tkm-app .tkm-textarea.tkm-textarea { height: auto; margin: 0; background-color: var(--tkm-surface); border: 1px solid var(--tkm-border-strong); border-radius: var(--tkm-r-sm); box-shadow: var(--tkm-shadow-xs); font-size: var(--tkm-fs); color: var(--tkm-text); padding-block: 10px; padding-inline: 14px; outline: none; }
@@ -247,7 +246,7 @@
 }
 @container tkm (max-width: 640px) {
   .tkm-ui .tkm-hero { padding: 22px; }
-  .tkm-ui .tkm-hero .tkm-btn { width: 100%; }
+  .tkm-ui .tkm-hero .tkm-btn { width: 100% !important; }
   .tkm-ui .tkm-hero__title, .tkm-ui .tkm-pagehead__title { font-size: var(--tkm-fs-xl); }
   .tkm-ui .tkm-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .tkm-ui .tkm-toolbar { flex-direction: column; align-items: stretch; }
@@ -261,12 +260,12 @@
   .tkm-ui .tkm-ticket__chev { display: none; }
   .tkm-ui .tkm-form-section { padding: 18px; }
   .tkm-ui .tkm-form-actions { padding: 16px 18px; }
-  .tkm-ui .tkm-form-actions .tkm-btn { width: 100%; }
+  .tkm-ui .tkm-form-actions .tkm-btn { width: 100% !important; }
   .tkm-ui .tkm-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tkm-ui .tkm-msg .tkm-avatar { --s: 30px; }
   .tkm-ui .tkm-msg__bubble { padding: 12px 14px; }
   .tkm-ui .tkm-composer__box .tkm-avatar { display: none; }
-  .tkm-ui .tkm-composer__foot .tkm-btn { width: 100%; }
+  .tkm-ui .tkm-composer__foot .tkm-btn { width: 100% !important; }
   .tkm-ui .tkm-attach__voice { margin-inline-start: 0; }
 }
 

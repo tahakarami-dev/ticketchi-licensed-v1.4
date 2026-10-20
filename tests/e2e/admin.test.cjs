@@ -156,6 +156,31 @@ async function fillEditor(page, id, text) {
   const noNonce = await page.evaluate(async () => (await fetch(TKM_APP.root + 'inbox', { credentials: 'same-origin' })).status);
   ok(noNonce === 401 || noNonce === 403, 'REST requires the nonce', String(noNonce));
 
+  console.log('\nAvatars');
+  ok((await page.locator('[data-usermenu-toggle] img.tkm-avatar').count()) === 1, 'staff get an illustrated avatar by default');
+  await page.click('[data-usermenu-toggle]');
+  await page.click('[data-avatar-open]');
+  await page.waitForSelector('.tkm-avmodal__opt');
+  ok((await page.locator('.tkm-avmodal__opt').count()) >= 12, 'preset avatars offered');
+  await page.locator('.tkm-avmodal__opt').nth(3).click();
+  await page.waitForSelector('.tkm-avmodal__opt.is-active');
+  const preset = await page.locator('.tkm-avmodal__opt.is-active').getAttribute('data-av-preset');
+  ok(wp(`echo get_user_meta(1, 'tkm_avatar_preset', true);`) === preset, 'chosen preset saved', preset);
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAQ0lEQVR42u3OMQ0AAAgDIJfc6FrDwwMJyAYzRxQVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRV9fwkgAAEGmm3ZAAAAAElFTkSuQmCC', 'base64');
+  await page.setInputFiles('[data-av-file]', { name: 'me.png', mimeType: 'image/png', buffer: png });
+  await page.waitForFunction(() => /me(-\d+)?\.png/.test(document.querySelector('[data-usermenu-toggle] img').src), null, { timeout: 8000 }).catch(() => {});
+  ok(/me(-\d+)?\.png/.test(await page.locator('[data-usermenu-toggle] img').getAttribute('src')), 'uploaded photo becomes the avatar');
+  const fake = await page.evaluate(async () => {
+    const fd = new FormData();
+    fd.append('file', new Blob(['<?php echo 1;'], { type: 'image/png' }), 'x.png');
+    return (await fetch(TKM_APP.root + 'me/avatar', { method: 'POST', headers: { 'X-WP-Nonce': TKM_APP.nonce }, body: fd })).status;
+  });
+  ok(fake === 400, 'non-image upload rejected', String(fake));
+  await page.click('[data-av-reset]');
+  await page.waitForTimeout(800);
+  ok(wp(`echo (int) get_user_meta(1, 'tkm_avatar_id', true);`) === '0', 'reset removes the uploaded photo');
+  await page.keyboard.press('Escape');
+
   console.log('\nAutomations');
   await page.goto(A('tkm-automations'));
   await page.waitForSelector('#tkm-automations[data-state="ready"]');

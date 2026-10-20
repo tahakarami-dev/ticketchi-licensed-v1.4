@@ -98,8 +98,11 @@
 
     /* ───────── Pieces ───────── */
     function avatar(user, size) {
-        if (!user) return '<span class="tkm-avatar tkm-avatar--' + (size || 'sm') + ' tkm-avatar--empty" aria-hidden="true">?</span>';
-        return '<span class="tkm-avatar tkm-avatar--' + (size || 'sm') + '" style="--h:' + (user.avatar ? user.avatar.hue : 220) + '" aria-hidden="true">' + esc(user.avatar ? user.avatar.initial : '') + '</span>';
+        var cls = 'tkm-avatar tkm-avatar--' + (size || 'sm');
+        if (!user) return '<span class="' + cls + ' tkm-avatar--empty" aria-hidden="true">?</span>';
+        var a = user.avatar || {};
+        if (a.url) return '<img class="' + cls + ' tkm-avatar--img" src="' + esc(a.url) + '" alt="" loading="lazy" decoding="async">';
+        return '<span class="' + cls + '" style="--h:' + (a.hue != null ? a.hue : 220) + '" aria-hidden="true">' + esc(a.initial || '') + '</span>';
     }
     function status(s) {
         return s ? '<span class="tkm-badge" style="--c:' + esc(s.color) + '">' + esc(s.name) + '</span>' : '';
@@ -379,8 +382,83 @@
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
     }
 
+    /* ───────── «My avatar» dialog ───────── */
+    function avatarDialog() {
+        var trigger = document.querySelector('[data-avatar-open]');
+        if (!trigger) return;
+        var el = document.createElement('div');
+        el.className = 'tkm-modal tkm-avmodal';
+        el.hidden = true;
+        el.setAttribute('role', 'dialog');
+        el.setAttribute('aria-modal', 'true');
+        el.setAttribute('aria-labelledby', 'tkm-av-title');
+        el.innerHTML = '<div class="tkm-modal__backdrop" data-av-close></div><div class="tkm-modal__dialog tkm-avmodal__dialog">' +
+            '<button type="button" class="tkm-btn tkm-btn--ghost tkm-btn--icon tkm-btn--sm tkm-modal__close" data-av-close aria-label="بستن">' + icon('x', 18) + '</button>' +
+            '<h3 class="tkm-modal__title" id="tkm-av-title">آواتار شما</h3>' +
+            '<p class="tkm-modal__text">این تصویر کنار پاسخ‌های شما به مشتری و در صندوق پشتیبانی نمایش داده می‌شود.</p>' +
+            '<div class="tkm-avmodal__body" data-av-body><span class="tkm-spinner"></span></div></div>';
+        (document.getElementById('tkm-admin') || document.body).appendChild(el);
+        var body = el.querySelector('[data-av-body]');
+        var busy = false;
+
+        function render(d) {
+            body.innerHTML =
+                '<div class="tkm-avmodal__current">' + avatar({ avatar: d.current }, 'xl') +
+                    '<div><label class="tkm-btn tkm-btn--primary tkm-btn--sm">' + icon('plus', 15) + ' آپلود عکس<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="tkm-sr" data-av-file></label>' +
+                    '<span class="tkm-hint">JPG، PNG یا WEBP — حداکثر ۲ مگابایت</span>' +
+                    (d.upload || d.preset ? '<button type="button" class="tkm-link-btn" data-av-reset>بازگشت به پیش‌فرض</button>' : '') + '</div></div>' +
+                '<div class="tkm-avmodal__label">یا یکی از آواتارهای آماده را انتخاب کنید</div>' +
+                '<div class="tkm-avmodal__grid" role="radiogroup" aria-label="آواتارهای آماده">' + d.presets.map(function (p) {
+                    var on = !d.upload && d.current.url === p.url;
+                    return '<button type="button" role="radio" aria-checked="' + on + '" class="tkm-avmodal__opt' + (on ? ' is-active' : '') + '" data-av-preset="' + esc(p.id) + '"><img src="' + esc(p.url) + '" alt=""></button>';
+                }).join('') + '</div>';
+        }
+        function apply(d) {
+            render(d);
+            // refresh every avatar of the current user already on screen
+            var me = document.querySelector('[data-usermenu-toggle] .tkm-avatar');
+            if (me) me.outerHTML = avatar({ avatar: d.current }, 'sm');
+            toast('success', 'آواتار بروزرسانی شد');
+        }
+        function run(promise) {
+            if (busy) return;
+            busy = true;
+            body.classList.add('is-busy');
+            promise.then(apply).catch(function (e) { toast('error', 'انجام نشد', e.message); })
+                .then(function () { busy = false; body.classList.remove('is-busy'); });
+        }
+        function open() {
+            el.hidden = false;
+            body.innerHTML = '<span class="tkm-spinner"></span>';
+            api('me/avatar').then(render).catch(function (e) { body.textContent = e.message; });
+        }
+        function close() { el.hidden = true; }
+
+        trigger.addEventListener('click', function () {
+            var panel = document.querySelector('[data-usermenu-panel]');
+            if (panel) panel.hidden = true;
+            open();
+        });
+        el.addEventListener('click', function (e) {
+            var t = e.target, b;
+            if (t.closest('[data-av-close]')) { close(); return; }
+            if ((b = t.closest('[data-av-preset]'))) { run(api('me/avatar', { method: 'POST', body: { preset: b.getAttribute('data-av-preset') } })); return; }
+            if (t.closest('[data-av-reset]')) { run(api('me/avatar', { method: 'DELETE' })); }
+        });
+        el.addEventListener('change', function (e) {
+            if (!e.target.matches('[data-av-file]') || !e.target.files[0]) return;
+            var f = e.target.files[0];
+            if (f.size > 2097152) { toast('error', 'حجم تصویر باید کمتر از ۲ مگابایت باشد'); return; }
+            var fd = new FormData();
+            fd.append('file', f);
+            run(api('me/avatar', { method: 'POST', form: fd }));
+        });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !el.hidden) close(); });
+    }
+
     function init() {
         usermenu();
+        avatarDialog();
         kit.bell = bell();
         kit.palette = palette();
     }

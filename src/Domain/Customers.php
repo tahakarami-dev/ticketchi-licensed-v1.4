@@ -92,11 +92,6 @@ final class Customers
 
     public static function avatar($user_id)
     {
-        $user = $user_id ? get_userdata($user_id) : false;
-        $name = $user ? $user->display_name : '؟';
-        return [
-            'initial' => function_exists('mb_substr') ? mb_substr(trim($name), 0, 1) : substr(trim($name), 0, 1),
-            'hue'     => $user_id ? crc32((string) $user_id) % 360 : 220,
-        ];
+        return \Ticketchi\Support\Avatars::data($user_id);
     }
 }

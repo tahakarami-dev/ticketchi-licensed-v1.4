@@ -100,6 +100,17 @@ const LIST = `${BASE}/my-account/tickets/`;
   await shot(page, 'front-single');
   ok(page.jsErrors.length === 0, 'no JS errors as customer', page.jsErrors.join(' | '));
 
+  console.log('\nTheme-proof UI');
+  // Themes restyle <button> (dark fill, black border, big padding); ours must keep the brand look.
+  await page.addStyleTag({ content: 'button,button[type=submit]{background:#1f4e4e;color:#fff;border:2px solid #000;padding:22px 40px;text-transform:uppercase;height:auto}label{display:block}' });
+  const primaryColor = await page.evaluate(() => getComputedStyle(document.querySelector('.tkm-app')).getPropertyValue('--tkm-primary').trim());
+  const sendBtn = await page.locator('[data-submit]').first().evaluate((el) => { const s = getComputedStyle(el); return { bg: s.backgroundColor, border: s.borderTopColor, h: s.height }; });
+  const toRgb = (hex) => { const n = parseInt(hex.replace('#', '').slice(0, 6), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
+  ok(sendBtn.bg === toRgb(primaryColor) && sendBtn.h === '40px', 'send button keeps brand colour and size under a hostile theme', JSON.stringify(sendBtn));
+  const sw = await page.locator('.tkm-composer__foot .tkm-switch__track').boundingBox().catch(() => null);
+  ok(sw && Math.round(sw.width) === 38, 'close-ticket switch keeps its shape', JSON.stringify(sw));
+  ok((await page.locator('.tkm-msg span.tkm-avatar').first().evaluate((el) => getComputedStyle(el).backgroundImage)) === 'none', 'customer avatar is flat (no gradient)');
+
   console.log('\nAccess control');
   const other = await session(browser, 'maryam');
   await other.page.goto(`${LIST}?action=single&ticket-id=${row.ID}`);

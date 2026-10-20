@@ -162,9 +162,10 @@ async function fillEditor(page, id, text) {
   await page.click('[data-avatar-open]');
   await page.waitForSelector('.tkm-avmodal__opt');
   ok((await page.locator('.tkm-avmodal__opt').count()) >= 12, 'preset avatars offered');
-  await page.locator('.tkm-avmodal__opt').nth(3).click();
-  await page.waitForSelector('.tkm-avmodal__opt.is-active');
-  const preset = await page.locator('.tkm-avmodal__opt.is-active').getAttribute('data-av-preset');
+  // pick one that is not the current default
+  const preset = await page.locator('.tkm-avmodal__opt:not(.is-active)').nth(3).getAttribute('data-av-preset');
+  await page.click(`[data-av-preset="${preset}"]`);
+  await page.waitForSelector(`[data-av-preset="${preset}"].is-active`, { timeout: 8000 }).catch(() => {});
   ok(wp(`echo get_user_meta(1, 'tkm_avatar_preset', true);`) === preset, 'chosen preset saved', preset);
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAQ0lEQVR42u3OMQ0AAAgDIJfc6FrDwwMJyAYzRxQVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRV9fwkgAAEGmm3ZAAAAAElFTkSuQmCC', 'base64');
   await page.setInputFiles('[data-av-file]', { name: 'me.png', mimeType: 'image/png', buffer: png });

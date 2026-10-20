@@ -1,6 +1,6 @@
 # تیکت‌چی — سیستم تیکت پشتیبانی وردپرس
 
-## نسخه ۲.۰ — هلپ‌دسک SaaS
+## نسخه ۲.۱ — هلپ‌دسک SaaS
 
 | بخش | امکانات |
 |---|---|
@@ -17,7 +17,7 @@
 | **پایگاه دانش** | مقاله‌های راهنما، مرکز راهنما با شورت‌کد `[ticketchi_kb]`، پیشنهاد مقاله هنگام نوشتن تیکت |
 | **جستجوی سراسری** | `Ctrl/⌘ + K` در همه صفحات تیکت‌چی |
 
-معماری و API: [ARCHITECTURE.md](ARCHITECTURE.md) · دیزاین سیستم: [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md)
+تغییرات نسخه‌ها: [CHANGELOG.md](CHANGELOG.md) · معماری و API: [ARCHITECTURE.md](ARCHITECTURE.md) · دیزاین سیستم: [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md)
 
 ## نیازمندی‌ها
 

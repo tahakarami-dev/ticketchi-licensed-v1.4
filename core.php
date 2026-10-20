@@ -172,11 +172,13 @@ if (!class_exists('TKM_Core', false)) {
             global $wpdb;
             $ticket_table = $wpdb->prefix . 'tkm_tickets';
 
-            $date = date("Y-m-d H:i:s", strtotime("-7 days"));
+            // Only tickets waiting on the customer (support answered) for a week.
+            // Tickets still waiting for the team, finished or trashed are never touched.
+            $date = gmdate('Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS);
 
             $tickets = $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT ID FROM {$ticket_table} WHERE status != 'closed' AND reply_date < %s",
+                    "SELECT ID FROM {$ticket_table} WHERE status = 'answerd' AND COALESCE(updated_at, reply_date) < %s",
                     $date
                 )
             );

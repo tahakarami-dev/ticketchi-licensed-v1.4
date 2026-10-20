@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>راهنمای تیکت‌چی</title>
+<style>
+@font-face { font-family: "Vazirmatn"; src: url("../assets/shared/fonts/vazirmatn-variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+:root {
+  --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f8f9fc; --border: #e6e8ef; --text: #101828; --text-2: #475467; --text-3: #8a94a6;
+  --primary: #2a48cd; --primary-soft: #eef1fd; --ok: #12a150; --ok-soft: #e8f7ee; --warn: #b26b00; --warn-soft: #fff6e5; --danger: #d92d20; --danger-soft: #fdecea;
+  --r: 14px; --shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px -12px rgba(16,24,40,.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0d1017; --surface: #151a24; --surface-2: #1a2030; --border: #283044; --text: #eef1f6; --text-2: #b4bccb; --text-3: #7c869a; --primary: #7c93ff; --primary-soft: #1e2647; --ok-soft: #10301f; --warn-soft: #33270d; --danger-soft: #3a1714; }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "Vazirmatn", Tahoma, sans-serif; font-size: 15.5px; line-height: 2; -webkit-font-smoothing: antialiased; }
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; direction: ltr; unicode-bidi: isolate; }
+code { padding: 2px 7px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); }
+kbd { display: inline-block; min-width: 24px; padding: 1px 7px; border-radius: 6px; border: 1px solid var(--border); border-bottom-width: 2px; background: var(--surface); text-align: center; line-height: 1.6; }
+
+.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 40px; max-width: 1240px; margin: 0 auto; padding: 4px 24px 80px; }
+.toc { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow: auto; padding: 18px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--border); }
+.toc__brand { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
+.toc__brand img { width: 36px; height: 36px; }
+.toc__brand strong { display: block; font-size: 15px; line-height: 1.4; }
+.toc__brand span { font-size: 12px; color: var(--text-3); }
+.toc input { width: 100%; height: 38px; padding: 0 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; font-size: 13px; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+.toc li { counter-increment: toc; }
+.toc a { display: flex; gap: 8px; padding: 5px 10px; border-radius: 8px; color: var(--text-2); font-size: 13.5px; line-height: 1.7; }
+.toc a::before { content: counter(toc, persian) "."; color: var(--text-3); min-width: 20px; }
+.toc a:hover, .toc a.is-active { background: var(--primary-soft); color: var(--primary); text-decoration: none; }
+
+main { min-width: 0; }
+.top { max-width: 1240px; margin: 0 auto; padding: 32px 24px 0; }
+.cover { position: relative; overflow: hidden; padding: 44px 40px; border-radius: 20px; color: #fff; background: #2a48cd; margin-bottom: 28px; }
+.cover::after { content: ""; position: absolute; inset: auto -80px -120px auto; width: 360px; height: 360px; border-radius: 50%; background: rgba(255,255,255,.08); }
+.cover h1 { margin: 0 0 6px; font-size: 34px; line-height: 1.4; }
+.cover p { margin: 0; max-width: 620px; color: rgba(255,255,255,.88); position: relative; z-index: 1; }
+.cover h1, .cover__meta { position: relative; z-index: 1; }
+.cover__meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.cover__meta span { padding: 2px 12px; border-radius: 99px; background: rgba(255,255,255,.16); font-size: 13px; }
+
+section { padding: 28px 32px; margin-bottom: 18px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+h2 { margin: 0 0 12px; font-size: 23px; line-height: 1.5; display: flex; align-items: center; gap: 12px; }
+h2 .n { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); font-size: 16px; flex: none; }
+h3 { margin: 26px 0 6px; font-size: 17px; line-height: 1.6; }
+p { margin: 0 0 12px; color: var(--text-2); }
+ul, ol { margin: 0 0 14px; padding-inline-start: 22px; color: var(--text-2); }
+li { margin: 3px 0; }
+li strong, p strong { color: var(--text); }
+.lead { font-size: 16.5px; color: var(--text-2); }
+
+.steps { list-style: none; padding: 0; counter-reset: s; display: grid; gap: 10px; }
+.steps > li { counter-increment: s; position: relative; padding: 12px 56px 12px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); margin: 0; }
+.steps > li::before { content: counter(s, persian); position: absolute; right: 14px; top: 12px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: #fff; font-weight: 700; font-size: 14px; line-height: 1; }
+
+.note { display: flex; gap: 12px; padding: 12px 16px; margin: 14px 0; border-radius: 12px; font-size: 14.5px; line-height: 1.9; }
+.note::before { flex: none; font-size: 18px; line-height: 1.6; }
+.note--tip { background: var(--ok-soft); color: var(--text); } .note--tip::before { content: "💡"; }
+.note--warn { background: var(--warn-soft); color: var(--text); } .note--warn::before { content: "⚠️"; }
+.note--info { background: var(--primary-soft); color: var(--text); } .note--info::before { content: "ℹ️"; }
+.note p { margin: 0; color: inherit; }
+
+figure { margin: 16px 0 20px; }
+figure img { display: block; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); background: #fff; }
+figure.sm img { max-width: min(520px, 100%); }
+figure.xs img { max-width: min(260px, 100%); }
+figcaption { margin-top: 8px; font-size: 13px; color: var(--text-3); text-align: center; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+
+table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 14.5px; }
+th, td { text-align: right; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); color: var(--text-2); font-weight: 700; font-size: 13.5px; }
+td:first-child { white-space: nowrap; color: var(--text); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 14px; padding: 0; list-style: none; }
+.chips li { margin: 0; padding: 2px 12px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13.5px; color: var(--text-2); }
+
+.foot { text-align: center; color: var(--text-3); font-size: 13px; padding: 20px 0 0; }
+.hidden-by-search { display: none; }
+
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 1fr; padding: 0 16px 40px; }
+  .top { padding: 16px 16px 0; }
+  .toc { position: static; max-height: none; }
+  section { padding: 22px 18px; }
+  .cover { padding: 30px 22px; }
+  .cover h1 { font-size: 26px; }
+  .grid2 { grid-template-columns: 1fr; }
+  td:first-child { white-space: normal; }
+  table { display: block; overflow-x: auto; }
+}
+
+@media print {
+  @page { size: A4; margin: 14mm 12mm; }
+  :root { --bg: #fff; --surface: #fff; --surface-2: #f6f7fa; --border: #e3e6ee; --text: #101828; --text-2: #3c4658; --text-3: #7a8497; --primary: #2a48cd; --primary-soft: #eef1fd; --ok-soft: #e8f7ee; --warn-soft: #fff6e5; }
+  body { font-size: 11.5pt; line-height: 1.85; background: #fff; }
+  .top { padding: 0; max-width: none; }
+  .layout { display: block; padding: 0; max-width: none; }
+  .toc { position: static; max-height: none; overflow: visible; border: 0; padding: 0; margin-bottom: 0; page-break-after: always; }
+  .toc__brand { display: none; }
+  .toc ol { columns: 2; column-gap: 10mm; }
+  .toc input { display: none; }
+  .toc a { font-size: 12pt; }
+  .cover { border-radius: 0; margin: 0 0 8mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  section { box-shadow: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 6mm 0 0; margin: 0 0 6mm; }
+  section.keep { border-top: 0; padding-top: 0; }
+  #inbox, #automation, #settings, #faq { page-break-before: always; border-top: 0; padding-top: 0; }
+  h2, h3 { page-break-after: avoid; }
+  figure, table, .note, .steps > li { page-break-inside: avoid; }
+  figure img { box-shadow: none; max-height: 120mm; width: auto; margin: 0 auto; }
+  figure.sm img { max-height: 95mm; }
+  .note, th, .steps > li::before, h2 .n, .chips li, code, kbd { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  a { color: var(--text); }
+}
+</style>
+</head>
+<body>
+<div class="top"><header class="cover">
+  <h1>راهنمای کامل تیکت‌چی</h1>
+  <p>از نصب و راه‌اندازی تا مدیریت تیم پشتیبانی، اتوماسیون و گزارش‌گیری؛ هرچه برای کار با تیکت‌چی لازم دارید در این راهنما آمده است.</p>
+  <div class="cover__meta"><span>نسخه ۲.۱.۰</span><span>سازگار با ووکامرس</span><span>راست‌چین و فارسی</span></div>
+</header></div>
+<div class="layout">
+
+<nav class="toc" aria-label="فهرست مطالب">
+  <div class="toc__brand">
+    <img src="../assets/shared/avatars/agent-01.svg" alt="">
+    <div><strong>راهنمای تیکت‌چی</strong><span>نسخه ۲.۱.۰</span></div>
+  </div>
+  <input type="search" id="q" placeholder="جستجو در راهنما…" aria-label="جستجو در راهنما">
+  <ol>
+    <li><a href="#intro">معرفی</a></li>
+    <li><a href="#install">نصب و فعال‌سازی</a></li>
+    <li><a href="#quick">راه‌اندازی سریع</a></li>
+    <li><a href="#panel">آشنایی با پنل مدیریت</a></li>
+    <li><a href="#dashboard">داشبورد</a></li>
+    <li><a href="#inbox">صندوق پشتیبانی</a></li>
+    <li><a href="#compose">ارسال تیکت به کاربر</a></li>
+    <li><a href="#team">تیم، دپارتمان‌ها و برچسب‌ها</a></li>
+    <li><a href="#sla">زمان پاسخ‌گویی (SLA)</a></li>
+    <li><a href="#automation">اتوماسیون</a></li>
+    <li><a href="#reports">گزارش‌ها</a></li>
+    <li><a href="#kb">پایگاه دانش و مرکز راهنما</a></li>
+    <li><a href="#notify">اعلان‌ها، ایمیل و پیامک</a></li>
+    <li><a href="#settings">تنظیمات</a></li>
+    <li><a href="#avatar">آواتار کارشناسان</a></li>
+    <li><a href="#customer">پنل مشتری</a></li>
+    <li><a href="#shortcodes">شورت‌کدها</a></li>
+    <li><a href="#faq">سوالات متداول و رفع مشکل</a></li>
+  </ol>
+</nav>
+
+<main>
+
+
+<!-- ───────────────────────── 1 ───────────────────────── -->
+<section id="intro" class="keep">
+  <h2><span class="n">۱</span>معرفی</h2>
+  <p class="lead">تیکت‌چی یک سیستم کامل پشتیبانی برای وردپرس است. مشتری‌ها از «حساب کاربری» یا هر صفحه دلخواه تیکت ثبت می‌کنند و تیم شما همه درخواست‌ها را در یک پنل مستقل و حرفه‌ای پاسخ می‌دهد.</p>
+  <h3>چه چیزهایی در اختیار دارید؟</h3>
+  <ul>
+    <li><strong>صندوق پشتیبانی:</strong> همه تیکت‌ها در یک صفحه، با نماهای آماده، جستجو، یادداشت داخلی و پاسخ‌های آماده.</li>
+    <li><strong>تیم و تخصیص:</strong> کارشناس پشتیبانی، سپردن تیکت به افراد و تقسیم خودکار تیکت‌ها.</li>
+    <li><strong>زمان پاسخ‌گویی (SLA):</strong> مهلت پاسخ و حل تیکت بر اساس اولویت، با هشدار تأخیر.</li>
+    <li><strong>اتوماسیون:</strong> قانون‌هایی که کارهای تکراری را خودکار انجام می‌دهند.</li>
+    <li><strong>گزارش‌ها:</strong> عملکرد تیم، زمان پاسخ، رضایت مشتری و ساعات پرترافیک.</li>
+    <li><strong>پایگاه دانش:</strong> مرکز راهنما برای مشتری‌ها و پیشنهاد مقاله هنگام ثبت تیکت.</li>
+    <li><strong>اعلان‌ها:</strong> زنگوله درون پنل، ایمیل و پیامک.</li>
+  </ul>
+  <h3>پیش‌نیازها</h3>
+  <ul>
+    <li>وردپرس ۵.۳ یا بالاتر و PHP ۷.۴ یا بالاتر.</li>
+    <li>ionCube Loader روی هاست فعال باشد (برای فایل لایسنس؛ بیشتر هاست‌ها به‌طور پیش‌فرض دارند).</li>
+    <li>ووکامرس اختیاری است؛ بدون آن از شورت‌کد <code>[tickets]</code> استفاده کنید.</li>
+  </ul>
+</section>
+
+<!-- ───────────────────────── 2 ───────────────────────── -->
+<section id="install">
+  <h2><span class="n">۲</span>نصب و فعال‌سازی</h2>
+  <h3>نصب تازه</h3>
+  <ol class="steps">
+    <li>در پیشخوان وردپرس به <strong>افزونه‌ها › افزودن › بارگذاری افزونه</strong> بروید و فایل zip تیکت‌چی را انتخاب کنید.</li>
+    <li>روی <strong>نصب</strong> و سپس <strong>فعال‌سازی</strong> کلیک کنید. جدول‌های افزونه خودکار ساخته می‌شوند.</li>
+    <li>کد لایسنس خریداری‌شده از راست‌چین را در صفحه فعال‌سازی لایسنس وارد کنید.</li>
+    <li>در منوی وردپرس آیتم <strong>«تیکت‌چی»</strong> اضافه می‌شود. روی آن کلیک کنید تا پنل باز شود.</li>
+  </ol>
+  <figure class="xs"><img src="images/menu.jpg" alt="آیتم تیکت‌چی در منوی وردپرس"><figcaption>تیکت‌چی فقط یک آیتم در منوی وردپرس دارد.</figcaption></figure>
+
+  <h3>ارتقا از نسخه‌های قبلی</h3>
+  <ol class="steps">
+    <li>از سایت نسخه پشتیبان بگیرید (پیشنهاد همیشگی).</li>
+    <li>نسخه قبلی تیکت‌چی را <strong>غیرفعال</strong> و سپس <strong>حذف</strong> کنید. تیکت‌ها، پاسخ‌ها و تنظیمات در پایگاه داده باقی می‌مانند.</li>
+    <li>نسخه جدید را نصب و فعال کنید. پایگاه داده خودکار به‌روزرسانی می‌شود و همه اطلاعات قبلی سر جایشان هستند.</li>
+  </ol>
+  <div class="note note--info"><p>اگر نسخه قدیمی و جدید هم‌زمان فعال باشند، نسخه جدید بدون خطا کنار می‌کشد و در پیشخوان پیام راهنما نشان می‌دهد. کافی است نسخه قدیمی را غیرفعال کنید.</p></div>
+</section>
+
+<!-- ───────────────────────── 3 ───────────────────────── -->
+<section id="quick">
+  <h2><span class="n">۳</span>راه‌اندازی سریع (۱۰ دقیقه)</h2>
+  <p>با این پنج گام سیستم پشتیبانی شما آماده کار است:</p>
+  <ol class="steps">
+    <li><strong>دپارتمان‌ها را بسازید:</strong> در <strong>تیم و دپارتمان‌ها</strong> بخش‌هایی مثل «پشتیبانی فنی»، «مالی» و «فروش» را تعریف کنید و برای هرکدام کارشناس پاسخ‌گو انتخاب کنید. <a href="#team">جزئیات</a></li>
+    <li><strong>رنگ برند را تنظیم کنید:</strong> در <strong>تنظیمات › ظاهر و برند</strong> رنگ اصلی سایتتان را انتخاب کنید. <a href="#settings">جزئیات</a></li>
+    <li><strong>پاسخ‌های آماده بنویسید:</strong> در <strong>تنظیمات › پاسخ‌های آماده</strong> متن‌های پرتکرار را اضافه کنید.</li>
+    <li><strong>تخصیص خودکار را روشن کنید:</strong> در <strong>تنظیمات › تیم و تخصیص</strong> حالت «نوبتی» را انتخاب کنید تا تیکت‌ها بین کارشناسان تقسیم شوند.</li>
+    <li><strong>یک تیکت آزمایشی ثبت کنید:</strong> با یک حساب مشتری به <strong>حساب کاربری › تیکت‌های پشتیبانی</strong> بروید و تیکت بفرستید. تیکت فوراً در صندوق پشتیبانی دیده می‌شود.</li>
+  </ol>
+  <div class="note note--tip"><p>بدون ووکامرس؟ یک برگه جدید بسازید، شورت‌کد <code>[tickets]</code> را در آن قرار دهید و لینکش را در منوی سایت بگذارید.</p></div>
+</section>
+
+<!-- ───────────────────────── 4 ───────────────────────── -->
+<section id="panel">
+  <h2><span class="n">۴</span>آشنایی با پنل مدیریت</h2>
+  <p>پنل تیکت‌چی تمام‌صفحه و جدا از پیشخوان وردپرس اجرا می‌شود تا تیم شما بدون شلوغی روی پشتیبانی تمرکز کند.</p>
+  <h3>هدر پنل</h3>
+  <ul>
+    <li><strong>منوی اصلی:</strong> داشبورد، صندوق پشتیبانی، گزارش‌ها، اتوماسیون، تیم و دپارتمان‌ها، تنظیمات. کارشناس‌ها فقط «داشبورد» و «صندوق پشتیبانی» را می‌بینند.</li>
+    <li><strong>جستجوی سریع:</strong> با <kbd>Ctrl</kbd> + <kbd>K</kbd> (در مک <kbd>⌘</kbd> + <kbd>K</kbd>) از هر صفحه، تیکت با شماره یا عنوان، مشتری با نام یا ایمیل و صفحه‌های پنل را پیدا کنید.</li>
+    <li><strong>زنگوله اعلان‌ها:</strong> تیکت جدید، پاسخ مشتری، تیکت سپرده‌شده به شما و هشدار تأخیر.</li>
+    <li><strong>حالت تاریک:</strong> با دکمه ماه/خورشید؛ انتخاب شما به خاطر سپرده می‌شود.</li>
+    <li><strong>منوی کاربر:</strong> تغییر آواتار، بازگشت به پیشخوان وردپرس، نمایش سایت، ویرایش پروفایل و خروج.</li>
+    <li><strong>دکمه بازگشت:</strong> فلش گوشه هدر شما را به پیشخوان وردپرس برمی‌گرداند.</li>
+  </ul>
+  <figure><img src="images/palette.jpg" alt="جستجوی سریع"><figcaption>جستجوی سریع با Ctrl + K</figcaption></figure>
+  <figure class="sm"><img src="images/bell.jpg" alt="اعلان‌ها"><figcaption>زنگوله اعلان‌ها</figcaption></figure>
+</section>
+
+<!-- ───────────────────────── 5 ───────────────────────── -->
+<section id="dashboard">
+  <h2><span class="n">۵</span>داشبورد</h2>
+  <p>نمای کلی وضعیت پشتیبانی در ۳۰ روز اخیر:</p>
+  <ul>
+    <li>تیکت‌های جدید، تیکت‌های در انتظار پاسخ (و تعداد فوری‌ها)، میانگین زمان اولین پاسخ و رضایت کاربران.</li>
+    <li>نمودار تیکت‌های ثبت‌شده در هر روز؛ با نگه داشتن ماوس روی هر ستون جزئیات آن روز نمایش داده می‌شود و با «نمایش جدول داده‌ها» اعداد دقیق را می‌بینید.</li>
+    <li>توزیع وضعیت‌ها، امتیاز کاربران، پرکارترین دپارتمان‌ها و اولویت تیکت‌های فعال.</li>
+  </ul>
+  <figure><img src="images/dashboard.jpg" alt="داشبورد"><figcaption>داشبورد مدیریت</figcaption></figure>
+</section>
+
+<!-- ───────────────────────── 6 ───────────────────────── -->
+<section id="inbox">
+  <h2><span class="n">۶</span>صندوق پشتیبانی</h2>
+  <p>محل اصلی کار تیم پشتیبانی. صفحه از سه ستون تشکیل شده است: <strong>نماها</strong> (راست)، <strong>فهرست تیکت‌ها</strong> (وسط) و <strong>گفتگو</strong> (چپ).</p>
+  <figure><img src="images/inbox.jpg" alt="صندوق پشتیبانی"><figcaption>صندوق پشتیبانی: نماها، فهرست و گفتگو</figcaption></figure>
+
+  <h3>نماها</h3>
+  <table>
+    <tr><th>نما</th><th>چه تیکت‌هایی را نشان می‌دهد</th></tr>
+    <tr><td>تیکت‌های من</td><td>تیکت‌های باز که به شما سپرده شده‌اند</td></tr>
+    <tr><td>بدون مسئول</td><td>تیکت‌های باز که هنوز کسی آن‌ها را برنداشته</td></tr>
+    <tr><td>همه تیکت‌های باز</td><td>همه تیکت‌هایی که بسته نشده‌اند</td></tr>
+    <tr><td>منتظر مشتری</td><td>تیکت‌هایی که پاسخ داده‌اید و منتظر جواب مشتری هستند</td></tr>
+    <tr><td>در خطر SLA</td><td>تیکت‌هایی که مهلتشان گذشته یا تا دو ساعت دیگر تمام می‌شود</td></tr>
+    <tr><td>بسته‌شده / همه / زباله‌دان</td><td>آرشیو تیکت‌ها</td></tr>
+  </table>
+  <p>زیر نماها، <strong>دپارتمان‌ها</strong> و <strong>برچسب‌ها</strong> هم قابل کلیک‌اند. در لپ‌تاپ‌ها این ستون جمع می‌شود و همین گزینه‌ها از منوی کشویی بالای فهرست در دسترس است.</p>
+
+  <h3>فهرست تیکت‌ها</h3>
+  <ul>
+    <li>تیکت‌هایی که آخرین پیامشان از مشتری است <strong>پررنگ</strong> نمایش داده می‌شوند؛ یعنی منتظر پاسخ شما هستند.</li>
+    <li>در هر ردیف: نام مشتری، عنوان، خلاصه آخرین پیام، وضعیت، اولویت، زمان باقی‌مانده تا مهلت، برچسب‌ها و آواتار مسئول.</li>
+    <li>جستجو در عنوان، متن، شماره تیکت (مثلاً <code>#۲۴</code>)، نام و ایمیل مشتری.</li>
+    <li>فیلتر اولویت و مرتب‌سازی: آخرین فعالیت، قدیمی‌ترین انتظار، تاریخ ایجاد، اولویت، نزدیک‌ترین مهلت.</li>
+    <li>فهرست هر ۳۰ ثانیه خودکار به‌روز می‌شود.</li>
+  </ul>
+
+  <h3>پاسخ دادن</h3>
+  <ul>
+    <li><strong>پاسخ به مشتری:</strong> متن را بنویسید و «ارسال پاسخ» بزنید (یا <kbd>Ctrl</kbd> + <kbd>Enter</kbd>). وضعیت تیکت خودکار «پاسخ داده» می‌شود.</li>
+    <li><strong>ارسال و بستن:</strong> پاسخ ارسال و تیکت هم‌زمان بسته می‌شود.</li>
+    <li><strong>یادداشت داخلی:</strong> تب «یادداشت داخلی» را انتخاب کنید. یادداشت‌ها زرد نمایش داده می‌شوند و <strong>مشتری هرگز آن‌ها را نمی‌بیند</strong>؛ برای هماهنگی تیم یا ثبت اطلاعات.</li>
+    <li><strong>پاسخ‌های آماده:</strong> دکمه ستاره کنار پیوست، متن‌های آماده‌ای را که در تنظیمات تعریف کرده‌اید درج می‌کند.</li>
+    <li><strong>پیوست:</strong> با دکمه گیره یا کشیدن فایل روی کادر پاسخ.</li>
+    <li><strong>پیش‌نویس:</strong> متن نیمه‌کاره هر تیکت خودکار ذخیره می‌شود؛ حتی اگر صفحه را ببندید.</li>
+  </ul>
+  <figure class="sm"><img src="images/note.jpg" alt="یادداشت داخلی"><figcaption>یادداشت داخلی فقط برای تیم پشتیبانی</figcaption></figure>
+
+  <h3>جزئیات، مشتری و تاریخچه</h3>
+  <p>ستون کناری گفتگو سه تب دارد:</p>
+  <ul>
+    <li><strong>جزئیات:</strong> وضعیت، اولویت، مسئول (همراه تعداد تیکت‌های باز هر کارشناس)، دپارتمان، برچسب‌ها، یادداشت ثابت تیکت و زمان‌های مهم. هر تغییری فوراً ذخیره می‌شود.</li>
+    <li><strong>مشتری:</strong> پروفایل کامل مشتری: ایمیل و موبایل، تعداد تیکت‌ها، میانگین رضایت، سفارش‌ها و مبلغ خرید ووکامرس و تیکت‌های قبلی.</li>
+    <li><strong>تاریخچه:</strong> همه اتفاقات تیکت (پاسخ‌ها، تغییر وضعیت و اولویت، سپردن، برچسب‌ها، امتیاز، کارهای اتوماسیون) با نام انجام‌دهنده و زمان.</li>
+  </ul>
+  <figure class="sm"><img src="images/customer.jpg" alt="پروفایل مشتری"><figcaption>پروفایل ۳۶۰ مشتری کنار گفتگو</figcaption></figure>
+
+  <h3>عملیات گروهی</h3>
+  <p>با نگه داشتن ماوس روی هر تیکت، چک‌باکس انتخاب ظاهر می‌شود. پس از انتخاب چند تیکت می‌توانید همه را یک‌جا به کارشناسی بسپارید، وضعیتشان را تغییر دهید یا به زباله‌دان بفرستید. در زباله‌دان امکان بازگردانی و حذف دائمی (فقط مدیر) وجود دارد.</p>
+
+  <h3>میانبرهای صفحه‌کلید</h3>
+  <table>
+    <tr><th>کلید</th><th>کار</th></tr>
+    <tr><td><kbd>J</kbd> / <kbd>K</kbd></td><td>تیکت بعدی / قبلی</td></tr>
+    <tr><td><kbd>R</kbd></td><td>نوشتن پاسخ</td></tr>
+    <tr><td><kbd>N</kbd></td><td>یادداشت داخلی</td></tr>
+    <tr><td><kbd>A</kbd></td><td>سپردن تیکت به خودم</td></tr>
+    <tr><td><kbd>X</kbd></td><td>انتخاب تیکت جاری برای عملیات گروهی</td></tr>
+    <tr><td><kbd>/</kbd></td><td>رفتن به جستجو</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>Enter</kbd></td><td>ارسال پاسخ</td></tr>
+    <tr><td><kbd>Ctrl</kbd> + <kbd>K</kbd></td><td>جستجوی سریع در همه‌جا</td></tr>
+    <tr><td><kbd>?</kbd></td><td>نمایش همه میانبرها</td></tr>
+  </table>
+  <div class="note note--tip"><p>آدرس هر تیکت قابل اشتراک است؛ کافی است لینک صفحه را برای همکارتان بفرستید تا مستقیم همان تیکت باز شود.</p></div>
+</section>
+
+<!-- ───────────────────────── 7 ───────────────────────── -->
+<section id="compose">
+  <h2><span class="n">۷</span>ارسال تیکت به کاربر</h2>
+  <p>گاهی پشتیبانی باید گفتگو را شروع کند (اطلاع‌رسانی، پیگیری سفارش و…). از دکمه <strong>«تیکت جدید»</strong> در هدر:</p>
+  <ol class="steps">
+    <li>یک یا چند گیرنده را با تایپ نام یا ایمیل انتخاب کنید.</li>
+    <li>عنوان، دپارتمان، وضعیت و اولویت را تعیین کنید.</li>
+    <li>متن پیام را بنویسید و در صورت نیاز فایل پیوست کنید.</li>
+    <li>«ارسال تیکت» را بزنید. برای هر گیرنده یک تیکت جداگانه ساخته می‌شود.</li>
+  </ol>
+  <figure><img src="images/compose.jpg" alt="ارسال تیکت به کاربر"><figcaption>ارسال تیکت به یک یا چند کاربر</figcaption></figure>
+</section>
+
+<!-- ───────────────────────── 8 ───────────────────────── -->
+<section id="team">
+  <h2><span class="n">۸</span>تیم، دپارتمان‌ها و برچسب‌ها</h2>
+  <h3>ساخت دپارتمان</h3>
+  <ol class="steps">
+    <li>به <strong>تیم و دپارتمان‌ها</strong> بروید.</li>
+    <li>در فرم «دپارتمان جدید» عنوان را بنویسید. برای زیرمجموعه (مثلاً «نصب و راه‌اندازی» زیر «پشتیبانی فنی»)، دپارتمان والد را انتخاب کنید.</li>
+    <li>در فیلد <strong>کارشناس پاسخ‌گو</strong> کاربرانی را که به این بخش پاسخ می‌دهند انتخاب کنید.</li>
+    <li>توضیح کوتاه (اختیاری) هنگام انتخاب دپارتمان به مشتری نمایش داده می‌شود.</li>
+  </ol>
+  <figure><img src="images/team.jpg" alt="تیم و دپارتمان‌ها"><figcaption>دپارتمان‌ها، حجم کار کارشناسان و برچسب‌ها</figcaption></figure>
+
+  <h3>افزودن کارشناس پشتیبانی</h3>
+  <p>دو راه وجود دارد:</p>
+  <ul>
+    <li><strong>نقش «کارشناس پشتیبانی»:</strong> در <strong>کاربران › افزودن</strong> (پیشخوان وردپرس) کاربر جدید بسازید و نقش «کارشناس پشتیبانی» را انتخاب کنید. این نقش فقط به پنل تیکت‌چی دسترسی دارد و پس از ورود مستقیم به صندوق پشتیبانی می‌رود.</li>
+    <li><strong>پاسخ‌گوی دپارتمان:</strong> هر کاربری که در یک دپارتمان به‌عنوان کارشناس پاسخ‌گو انتخاب شود، خودکار دسترسی کارشناس می‌گیرد.</li>
+  </ul>
+  <table>
+    <tr><th>نقش</th><th>دسترسی</th></tr>
+    <tr><td>مدیر سایت / مدیر فروشگاه</td><td>همه بخش‌ها: صندوق، گزارش‌ها، اتوماسیون، تیم، تنظیمات، حذف دائمی</td></tr>
+    <tr><td>کارشناس پشتیبانی</td><td>داشبورد و صندوق پشتیبانی؛ به‌طور پیش‌فرض فقط تیکت‌های دپارتمان‌های خودش و تیکت‌هایی که به او سپرده شده</td></tr>
+  </table>
+  <div class="note note--info"><p>اگر می‌خواهید همه کارشناس‌ها همه تیکت‌ها را ببینند، در <strong>تنظیمات › تیم و تخصیص</strong> گزینه «همه تیکت‌ها» را انتخاب کنید.</p></div>
+
+  <h3>تخصیص تیکت</h3>
+  <ul>
+    <li><strong>دستی:</strong> از تب «جزئیات» در صندوق، یا دکمه «سپردن به من».</li>
+    <li><strong>نوبتی:</strong> تیکت‌های جدید به‌ترتیب بین کارشناسان همان دپارتمان تقسیم می‌شوند.</li>
+    <li><strong>کم‌کارترین:</strong> تیکت جدید به کارشناسی می‌رسد که کمترین تیکت باز را دارد.</li>
+  </ul>
+  <p>حالت تخصیص در <strong>تنظیمات › تیم و تخصیص</strong> انتخاب می‌شود.</p>
+
+  <h3>برچسب‌ها</h3>
+  <p>برچسب‌ها (مثلاً «VIP»، «باگ»، «فوری») برای دسته‌بندی تیکت‌ها هستند. در پایین صفحه تیم و دپارتمان‌ها برچسب بسازید، نام و رنگش را تغییر دهید یا حذفش کنید. داخل هر تیکت هم با تایپ نام و زدن <kbd>Enter</kbd> برچسب اضافه می‌شود؛ اگر وجود نداشته باشد ساخته می‌شود.</p>
+</section>
+
+<!-- ───────────────────────── 9 ───────────────────────── -->
+<section id="sla">
+  <h2><span class="n">۹</span>زمان پاسخ‌گویی (SLA)</h2>
+  <p>SLA تعهد زمانی شما به مشتری است: «به تیکت‌های فوری حداکثر ظرف ۲ ساعت پاسخ می‌دهیم». تیکت‌چی برای هر تیکت دو مهلت تعیین می‌کند:</p>
+  <ul>
+    <li><strong>مهلت اولین پاسخ:</strong> تا اولین پاسخ پشتیبانی.</li>
+    <li><strong>مهلت حل:</strong> تا بسته شدن تیکت.</li>
+  </ul>
+  <p>مقادیر پیش‌فرض (قابل تغییر در <strong>تنظیمات › SLA و زمان پاسخ</strong>):</p>
+  <table>
+    <tr><th>اولویت</th><th>اولین پاسخ</th><th>حل تیکت</th></tr>
+    <tr><td>زیاد</td><td>۲ ساعت</td><td>۲۴ ساعت</td></tr>
+    <tr><td>متوسط</td><td>۸ ساعت</td><td>۴۸ ساعت</td></tr>
+    <tr><td>کم</td><td>۲۴ ساعت</td><td>۹۶ ساعت</td></tr>
+  </table>
+  <ul>
+    <li>با فعال کردن <strong>ساعات کاری</strong>، مهلت‌ها فقط در روزها و ساعات کاری شما شمرده می‌شوند (مثلاً شنبه تا چهارشنبه، ۹ تا ۱۷).</li>
+    <li>زمان باقی‌مانده در فهرست تیکت‌ها نمایش داده می‌شود: آبی (در موعد)، نارنجی (نزدیک مهلت)، قرمز (گذشته از مهلت)، سبز (رعایت شد).</li>
+    <li>با عبور از مهلت، اعلان و ایمیل هشدار برای مسئول تیکت (یا مدیران) ارسال می‌شود.</li>
+    <li>با تغییر اولویت تیکت، مهلت‌ها دوباره محاسبه می‌شوند.</li>
+  </ul>
+  <figure><img src="images/settings-sla.jpg" alt="تنظیمات SLA"><figcaption>تنظیم مهلت‌ها و ساعات کاری</figcaption></figure>
+</section>
+
+<!-- ───────────────────────── 10 ───────────────────────── -->
+<section id="automation">
+  <h2><span class="n">۱۰</span>اتوماسیون</h2>
+  <p>اتوماسیون کارهای تکراری را از دوش تیم برمی‌دارد. هر قانون سه بخش دارد: <strong>وقتی</strong> (رویداد)، <strong>اگر</strong> (شرط‌ها؛ اختیاری) و <strong>آنگاه</strong> (کارها).</p>
+  <figure><img src="images/automations.jpg" alt="اتوماسیون"><figcaption>فهرست قانون‌ها و الگوهای آماده</figcaption></figure>
+
+  <h3>ساخت قانون</h3>
+  <ol class="steps">
+    <li>به <strong>اتوماسیون</strong> بروید و «قانون جدید» بزنید، یا روی یکی از الگوهای آماده کلیک کنید.</li>
+    <li>نام قانون و رویداد را انتخاب کنید.</li>
+    <li>در صورت نیاز شرط اضافه کنید؛ قانون فقط وقتی اجرا می‌شود که <strong>همه</strong> شرط‌ها برقرار باشند.</li>
+    <li>یک یا چند کار تعریف کنید و «ذخیره قانون» را بزنید.</li>
+  </ol>
+  <figure><img src="images/automation-builder.jpg" alt="سازنده قانون"><figcaption>سازنده قانون «وقتی ← اگر ← آنگاه»</figcaption></figure>
+
+  <h3>رویدادها، شرط‌ها و کارها</h3>
+  <table>
+    <tr><th>بخش</th><th>گزینه‌ها</th></tr>
+    <tr><td>وقتی</td><td>تیکت جدید ثبت شد · مشتری پاسخ داد · پشتیبانی پاسخ داد · وضعیت تیکت تغییر کرد · تیکت منتظر پاسخ پشتیبانی ماند · تیکت منتظر پاسخ مشتری ماند</td></tr>
+    <tr><td>اگر</td><td>دپارتمان · اولویت · وضعیت · برچسب · کلمه در عنوان یا متن · مسئول دارد/ندارد · مشتری خرید دارد · مدت انتظار (ساعت)</td></tr>
+    <tr><td>آنگاه</td><td>سپردن (به فرد، نوبتی یا کم‌کارترین) · تغییر اولویت · تغییر وضعیت · افزودن برچسب · یادداشت داخلی · پاسخ خودکار به مشتری · اطلاع به کارشناس</td></tr>
+  </table>
+  <p>در متن پاسخ خودکار می‌توانید از این متغیرها استفاده کنید: <code>{customer}</code> نام مشتری، <code>{ticket_id}</code> شماره تیکت، <code>{title}</code> عنوان، <code>{site}</code> نام سایت.</p>
+
+  <h3>نمونه‌های کاربردی</h3>
+  <ul>
+    <li><strong>تیکت‌های فوری:</strong> وقتی تیکت جدید ثبت شد، اگر متن شامل «فوری» بود ← اولویت زیاد + برچسب «فوری».</li>
+    <li><strong>بستن تیکت‌های رهاشده:</strong> وقتی تیکت ۷۲ ساعت منتظر پاسخ مشتری ماند ← پاسخ خودکار یادآوری + وضعیت بسته.</li>
+    <li><strong>مشتریان VIP:</strong> وقتی تیکت جدید ثبت شد، اگر مشتری خرید دارد ← برچسب VIP + سپردن به کارشناس ارشد.</li>
+  </ul>
+  <div class="note note--info"><p>قانون‌های زمانی («منتظر … ماند») هر ساعت بررسی می‌شوند و برای هر تیکت فقط یک بار اجرا می‌شوند. قانون‌ها باعث اجرای زنجیره‌ای قانون‌های دیگر نمی‌شوند.</p></div>
+</section>
+
+<!-- ───────────────────────── 11 ───────────────────────── -->
+<section id="reports">
+  <h2><span class="n">۱۱</span>گزارش‌ها</h2>
+  <p>بازه زمانی را انتخاب کنید (۷، ۳۰ یا ۹۰ روز، این ماه یا بازه دلخواه). همه اعداد با بازه قبلیِ هم‌اندازه مقایسه می‌شوند.</p>
+  <ul>
+    <li><strong>شاخص‌ها:</strong> تیکت‌های جدید، حل‌شده، زمان اولین پاسخ، زمان حل، درصد رعایت SLA، رضایت مشتری، تعداد پاسخ‌ها.</li>
+    <li><strong>روند روزانه:</strong> نمودار تیکت‌های ثبت‌شده و حل‌شده.</li>
+    <li><strong>عملکرد کارشناسان:</strong> تیکت‌های سپرده‌شده، حل‌شده، پاسخ‌ها، زمان اولین پاسخ و رضایت هر نفر.</li>
+    <li><strong>رضایت مشتری:</strong> توزیع امتیازها و درصد مشتریان راضی.</li>
+    <li><strong>ساعات پرترافیک:</strong> نقشه حرارتی روزهای هفته و ساعات شبانه‌روز؛ برای برنامه‌ریزی شیفت‌ها.</li>
+    <li><strong>خروجی CSV:</strong> فهرست تیکت‌های بازه انتخابی برای اکسل.</li>
+  </ul>
+  <figure><img src="images/reports.jpg" alt="گزارش‌ها"><figcaption>گزارش‌های تحلیلی</figcaption></figure>
+</section>
+
+<!-- ───────────────────────── 12 ───────────────────────── -->
+<section id="kb">
+  <h2><span class="n">۱۲</span>پایگاه دانش و مرکز راهنما</h2>
+  <p>با پایگاه دانش، مشتری‌ها جواب سوال‌های پرتکرار را خودشان پیدا می‌کنند و تعداد تیکت‌ها کم می‌شود.</p>
+  <ol class="steps">
+    <li>در پیشخوان وردپرس از منوی <strong>پایگاه دانش</strong> مقاله بنویسید و دسته‌بندی کنید (مثل نوشتن یک نوشته معمولی).</li>
+    <li>یک برگه جدید (مثلاً «مرکز راهنما») بسازید و شورت‌کد <code>[ticketchi_kb]</code> را در آن قرار دهید.</li>
+    <li>لینک این برگه را در منوی سایت بگذارید.</li>
+  </ol>
+  <ul>
+    <li>مرکز راهنما شامل جستجو، دسته‌ها و مقاله‌های تازه است و در پایان دکمه «ثبت تیکت پشتیبانی» دارد.</li>
+    <li>زیر هر مقاله کادر «جوابتان را پیدا نکردید؟» با لینک ثبت تیکت نمایش داده می‌شود.</li>
+    <li><strong>پیشنهاد هوشمند:</strong> هنگام نوشتن عنوان تیکت، مقاله‌های مرتبط به مشتری پیشنهاد می‌شوند.</li>
+  </ul>
+  <div class="grid2">
+    <figure><img src="images/front-kb.jpg" alt="مرکز راهنما"><figcaption>مرکز راهنما</figcaption></figure>
+    <figure><img src="images/front-new.jpg" alt="پیشنهاد مقاله"><figcaption>پیشنهاد مقاله هنگام ثبت تیکت</figcaption></figure>
+  </div>
+  <div class="note note--warn"><p>اگر نامک آدرس مقاله‌ها را در تنظیمات تغییر دادید و صفحه مقاله «یافت نشد» نشان داد، یک بار به <strong>تنظیمات › پیوندهای یکتا</strong> وردپرس بروید و «ذخیره تغییرات» را بزنید.</p></div>
+</section>
+
+<!-- ───────────────────────── 13 ───────────────────────── -->
+<section id="notify">
+  <h2><span class="n">۱۳</span>اعلان‌ها، ایمیل و پیامک</h2>
+  <h3>اعلان درون پنل</h3>
+  <p>زنگوله هدر برای تیکت جدید (کارشناسان دپارتمان)، پاسخ مشتری (مسئول تیکت)، سپرده شدن تیکت و عبور از مهلت SLA اعلان می‌دهد. با کلیک روی هر اعلان مستقیم به تیکت می‌روید.</p>
+  <h3>ایمیل</h3>
+  <ul>
+    <li><strong>به مشتری:</strong> تایید ثبت تیکت و اطلاع پاسخ جدید پشتیبانی.</li>
+    <li><strong>به تیم:</strong> تیکت جدید، پاسخ مشتری، تیکت سپرده‌شده و هشدار SLA.</li>
+    <li>ایمیل‌ها راست‌چین و با رنگ برند شما ارسال می‌شوند. نام و ایمیل فرستنده در <strong>تنظیمات › اعلان‌ها</strong> قابل تغییر است.</li>
+  </ul>
+  <div class="note note--tip"><p>برای اطمینان از رسیدن ایمیل‌ها (و نرفتن به پوشه اسپم)، یک افزونه SMTP مثل WP Mail SMTP نصب و تنظیم کنید.</p></div>
+  <h3>پیامک</h3>
+  <ol class="steps">
+    <li>در <strong>تنظیمات › پیامک</strong> سامانه (ملی پیامک یا کاوه‌نگار) را انتخاب و اطلاعات حساب را وارد کنید.</li>
+    <li>در «فیلد شماره موبایل کاربر» کلیدی را که شماره موبایل در آن ذخیره می‌شود وارد کنید؛ در ووکامرس معمولاً <code>billing_phone</code>.</li>
+    <li>پیامک ثبت تیکت و/یا پیامک پاسخ را فعال و کد الگوی سامانه را وارد کنید.</li>
+  </ol>
+  <figure><img src="images/settings-sms.jpg" alt="تنظیمات پیامک"><figcaption>تنظیمات پیامک</figcaption></figure>
+</section>
+
+<!-- ───────────────────────── 14 ───────────────────────── -->
+<section id="settings">
+  <h2><span class="n">۱۴</span>تنظیمات</h2>
+  <p>تنظیمات در ۱۳ بخش مرتب شده‌اند. با کادر <strong>جستجو در تنظیمات</strong> هر گزینه را سریع پیدا کنید. هر تغییری که بدهید، نوار «تغییرات ذخیره‌نشده» پایین صفحه ظاهر می‌شود؛ با «ذخیره تغییرات» یا <kbd>Ctrl</kbd> + <kbd>S</kbd> ذخیره کنید.</p>
+  <figure><img src="images/settings-brand.jpg" alt="تنظیمات ظاهر و برند"><figcaption>ظاهر و برند با پیش‌نمایش زنده</figcaption></figure>
+  <table>
+    <tr><th>بخش</th><th>چه چیزی را تنظیم می‌کند</th></tr>
+    <tr><td>عمومی</td><td>پیغام بالای فرم ثبت تیکت، پاسخ خودکار پس از ثبت تیکت، امتیازدهی مشتری، بستن خودکار تیکت‌های پاسخ‌داده‌شده پس از یک هفته</td></tr>
+    <tr><td>ظاهر و برند</td><td>رنگ اصلی، رنگ هاور، رنگ متن روی دکمه‌ها، عنوان و توضیح پنل مشتری</td></tr>
+    <tr><td>فرم ثبت تیکت</td><td>برچسب فیلدهای فرم، انتخاب محصول ووکامرس و Easy Digital Downloads</td></tr>
+    <tr><td>پیوست فایل</td><td>حداکثر حجم، پسوندهای مجاز، آپلود چند فایل و حداکثر تعداد</td></tr>
+    <tr><td>پاسخ‌های آماده</td><td>متن‌های پرتکرار برای درج سریع در پاسخ‌ها (قابل مرتب‌سازی با کشیدن)</td></tr>
+    <tr><td>سوالات متداول</td><td>نمایش سوالات پرتکرار پیش از فرم ثبت تیکت</td></tr>
+    <tr><td>وضعیت‌ها</td><td>رنگ وضعیت‌های پیش‌فرض و ساخت وضعیت‌های اختصاصی (مثلاً «در انتظار بررسی فنی»)</td></tr>
+    <tr><td>تیم و تخصیص</td><td>حالت تخصیص خودکار و محدوده دید کارشناسان</td></tr>
+    <tr><td>SLA و زمان پاسخ</td><td>مهلت‌ها برای هر اولویت و ساعات کاری</td></tr>
+    <tr><td>اعلان‌ها</td><td>ایمیل‌های مشتری و تیم، نام و ایمیل فرستنده</td></tr>
+    <tr><td>پیامک</td><td>سامانه پیامکی، پیامک ثبت تیکت و پیامک پاسخ</td></tr>
+    <tr><td>پایگاه دانش</td><td>فعال‌سازی، پیشنهاد مقاله و نامک آدرس مقاله‌ها</td></tr>
+    <tr><td>شورت‌کدها</td><td>شورت‌کدهای قابل استفاده با دکمه کپی</td></tr>
+  </table>
+  <div class="grid2">
+    <figure><img src="images/settings-canned.jpg" alt="پاسخ‌های آماده"><figcaption>پاسخ‌های آماده</figcaption></figure>
+    <figure><img src="images/settings-team.jpg" alt="تیم و تخصیص"><figcaption>تیم و تخصیص</figcaption></figure>
+  </div>
+</section>
+
+<!-- ───────────────────────── 15 ───────────────────────── -->
+<section id="avatar">
+  <h2><span class="n">۱۵</span>آواتار کارشناسان</h2>
+  <p>آواتار هر کارشناس کنار پاسخ‌هایش به مشتری و در صندوق پشتیبانی نمایش داده می‌شود. هر کارشناس به‌طور پیش‌فرض یکی از آواتارهای آماده را دارد.</p>
+  <ol class="steps">
+    <li>در هدر پنل روی آواتار خود کلیک کنید و <strong>«تغییر آواتار»</strong> را بزنید.</li>
+    <li>یکی از آواتارهای آماده را انتخاب کنید، یا با <strong>«آپلود عکس»</strong> تصویر خودتان را بگذارید (JPG، PNG، WEBP یا GIF تا ۲ مگابایت).</li>
+    <li>با «بازگشت به پیش‌فرض» عکس آپلودشده حذف می‌شود.</li>
+  </ol>
+  <figure class="sm"><img src="images/avatar.jpg" alt="تغییر آواتار"><figcaption>انتخاب آواتار آماده یا آپلود عکس</figcaption></figure>
+</section>
+
+<!-- ───────────────────────── 16 ───────────────────────── -->
+<section id="customer">
+  <h2><span class="n">۱۶</span>پنل مشتری</h2>
+  <p>مشتری‌ها از <strong>حساب کاربری › تیکت‌های پشتیبانی</strong> در ووکامرس، یا هر برگه‌ای که شورت‌کد <code>[tickets]</code> دارد، به پنل دسترسی دارند.</p>
+  <h3>داشبورد مشتری</h3>
+  <p>آمار تیکت‌ها بر اساس وضعیت، فهرست تیکت‌ها با فیلتر وضعیت، اولویت و نوع (ارسالی/دریافتی)، و دکمه «ثبت تیکت جدید».</p>
+  <figure><img src="images/front-list.jpg" alt="داشبورد مشتری"><figcaption>داشبورد تیکت‌های مشتری</figcaption></figure>
+  <h3>ثبت تیکت</h3>
+  <ol class="steps">
+    <li>اگر فعال باشد، ابتدا سوالات متداول نمایش داده می‌شود.</li>
+    <li>مشتری دپارتمان (و در صورت وجود، زیرمجموعه) را انتخاب می‌کند.</li>
+    <li>عنوان، محصول مرتبط، اولویت و توضیحات را می‌نویسد. مقاله‌های مرتبط پایگاه دانش پیشنهاد می‌شوند.</li>
+    <li>می‌تواند فایل پیوست کند یا پیام صوتی ضبط کند.</li>
+  </ol>
+  <h3>گفتگو</h3>
+  <ul>
+    <li>گفتگوی چت‌گونه با پشتیبانی؛ پاسخ‌ها بدون بارگذاری دوباره صفحه ارسال می‌شوند.</li>
+    <li>مشتری می‌تواند با سوییچ «مشکلم حل شد» تیکت را ببندد.</li>
+    <li>پس از پاسخ پشتیبانی، امکان امتیازدهی ۱ تا ۵ ستاره وجود دارد.</li>
+    <li>یادداشت‌های داخلی تیم هرگز به مشتری نمایش داده نمی‌شوند.</li>
+  </ul>
+  <figure><img src="images/front-single.jpg" alt="گفتگوی مشتری"><figcaption>صفحه تیکت از دید مشتری</figcaption></figure>
+</section>
+
+<!-- ───────────────────────── 17 ───────────────────────── -->
+<section id="shortcodes">
+  <h2><span class="n">۱۷</span>شورت‌کدها</h2>
+  <table>
+    <tr><th>شورت‌کد</th><th>کاربرد</th></tr>
+    <tr><td><code>[tickets]</code></td><td>پنل کامل تیکت مشتری (فهرست، ثبت تیکت، گفتگو). در ووکامرس به‌طور خودکار در «حساب کاربری» هم وجود دارد.</td></tr>
+    <tr><td><code>[ticketchi_kb]</code></td><td>مرکز راهنما با جستجو و دسته‌بندی مقاله‌های پایگاه دانش.</td></tr>
+  </table>
+  <p>شورت‌کد را در ویرایشگر برگه (بلوک «کد کوتاه» در گوتنبرگ یا ابزارک متن در المنتور) قرار دهید.</p>
+</section>
+
+<!-- ───────────────────────── 18 ───────────────────────── -->
+<section id="faq">
+  <h2><span class="n">۱۸</span>سوالات متداول و رفع مشکل</h2>
+
+  <h3>کارشناس پشتیبانی نمی‌تواند وارد پنل شود.</h3>
+  <p>مطمئن شوید نقش کاربر «کارشناس پشتیبانی» است یا در یکی از دپارتمان‌ها به‌عنوان کارشناس پاسخ‌گو انتخاب شده است. پس از ورود، کارشناس مستقیم به صندوق پشتیبانی هدایت می‌شود.</p>
+
+  <h3>کارشناس همه تیکت‌ها را نمی‌بیند.</h3>
+  <p>به‌طور پیش‌فرض هر کارشناس فقط تیکت‌های دپارتمان‌های خودش و تیکت‌های سپرده‌شده به خودش را می‌بیند. برای تغییر، در <strong>تنظیمات › تیم و تخصیص</strong> گزینه «همه تیکت‌ها» را انتخاب کنید.</p>
+
+  <h3>ایمیل‌ها ارسال نمی‌شوند یا به اسپم می‌روند.</h3>
+  <p>بسیاری از هاست‌ها ارسال ایمیل با تابع پیش‌فرض PHP را محدود می‌کنند. یک افزونه SMTP نصب کنید و ایمیل فرستنده را در <strong>تنظیمات › اعلان‌ها</strong> روی همان ایمیل SMTP قرار دهید.</p>
+
+  <h3>هشدارهای SLA، قانون‌های زمانی یا بستن خودکار اجرا نمی‌شوند.</h3>
+  <p>این کارها با زمان‌بند وردپرس (WP-Cron) انجام می‌شوند که فقط با بازدید از سایت اجرا می‌شود. در سایت‌های کم‌بازدید، یا اگر <code>DISABLE_WP_CRON</code> فعال است، از پنل هاست یک Cron Job برای فراخوانی <code>wp-cron.php</code> هر ۵ تا ۱۵ دقیقه تنظیم کنید.</p>
+
+  <h3>فایل آپلود نمی‌شود.</h3>
+  <p>پسوند فایل باید در فهرست <strong>تنظیمات › پیوست فایل</strong> باشد و حجم آن از حد مجاز کمتر باشد. حد آپلود هاست (<code>upload_max_filesize</code>) هم نباید از مقدار تنظیم‌شده کمتر باشد.</p>
+
+  <h3>پیام صوتی ضبط نمی‌شود.</h3>
+  <p>ضبط صدا فقط روی سایت‌های <strong>HTTPS</strong> و پس از اجازه دادن مرورگر به میکروفون کار می‌کند.</p>
+
+  <h3>ظاهر پنل مشتری با قالب سایت تداخل دارد.</h3>
+  <p>تیکت‌چی طوری طراحی شده که دکمه‌ها و فرم‌هایش در برابر استایل قالب‌ها مقاوم باشند. اگر باز هم مشکلی دیدید، کش افزونه‌های بهینه‌سازی (مثل LiteSpeed یا WP Rocket) را پاک کنید. اگر مشکل ادامه داشت، با تصویر صفحه به پشتیبانی پیام دهید.</p>
+
+  <h3>صفحه مقاله پایگاه دانش «یافت نشد» می‌دهد.</h3>
+  <p>به <strong>تنظیمات › پیوندهای یکتا</strong> وردپرس بروید و یک بار «ذخیره تغییرات» را بزنید.</p>
+
+  <h3>رنگ برند در سایت تغییر نمی‌کند.</h3>
+  <p>پس از ذخیره تنظیمات، کش مرورگر و کش افزونه‌های بهینه‌سازی را پاک کنید.</p>
+
+  <h3>آیا با ارتقا اطلاعاتم از بین می‌رود؟</h3>
+  <p>خیر. همه تیکت‌ها، پاسخ‌ها، دپارتمان‌ها و تنظیمات حفظ می‌شوند و پایگاه داده خودکار به‌روزرسانی می‌شود. با این حال گرفتن نسخه پشتیبان پیش از هر ارتقا توصیه می‌شود.</p>
+
+  <div class="note note--info"><p>سوالتان اینجا نبود؟ از طریق صفحه محصول در راست‌چین با پشتیبانی تیکت‌چی در تماس باشید.</p></div>
+</section>
+
+<p class="foot">تیکت‌چی · نسخه ۲.۱.۰ · طاها کرمی</p>
+</main>
+</div>
+
+<script>
+(function () {
+  // highlight the current section in the table of contents
+  var links = [].slice.call(document.querySelectorAll('.toc a'));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          links.forEach(function (a) { a.classList.remove('is-active'); });
+          if (map[e.target.id]) map[e.target.id].classList.add('is-active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('main section').forEach(function (s) { io.observe(s); });
+  }
+  // search: hide sections that don't mention the query
+  var q = document.getElementById('q');
+  q.addEventListener('input', function () {
+    var term = q.value.trim();
+    document.querySelectorAll('main section').forEach(function (s) {
+      var hit = !term || s.textContent.indexOf(term) !== -1;
+      s.classList.toggle('hidden-by-search', !hit);
+      if (map[s.id]) map[s.id].parentNode.style.display = hit ? '' : 'none';
+    });
+  });
+})();
+</script>
+</body>
+</html>

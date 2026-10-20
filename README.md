@@ -17,7 +17,7 @@
 | **پایگاه دانش** | مقاله‌های راهنما، مرکز راهنما با شورت‌کد `[ticketchi_kb]`، پیشنهاد مقاله هنگام نوشتن تیکت |
 | **جستجوی سراسری** | `Ctrl/⌘ + K` در همه صفحات تیکت‌چی |
 
-تغییرات نسخه‌ها: [CHANGELOG.md](CHANGELOG.md) · معماری و API: [ARCHITECTURE.md](ARCHITECTURE.md) · دیزاین سیستم: [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md)
+راهنمای کاربر: [documentation/help.html](documentation/help.html) ([PDF](documentation/help.pdf)) · تغییرات نسخه‌ها: [CHANGELOG.md](CHANGELOG.md) · معماری و API: [ARCHITECTURE.md](ARCHITECTURE.md) · دیزاین سیستم: [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md)
 
 ## نیازمندی‌ها
 

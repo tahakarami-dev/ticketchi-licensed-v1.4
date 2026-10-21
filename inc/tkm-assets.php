@@ -100,7 +100,7 @@ class TKM_ASSETS
         }
 
         $post = get_post();
-        return $post && has_shortcode((string) $post->post_content, 'tickets');
+        return $post && (has_shortcode((string) $post->post_content, 'tickets') || has_shortcode((string) $post->post_content, 'ticketchi'));
     }
 
     public static function enqueue_front()

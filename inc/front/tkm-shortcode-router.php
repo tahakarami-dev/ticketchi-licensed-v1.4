@@ -6,6 +6,8 @@ class TKM_Shortcode_Router {
 
     public function __construct() {
         add_shortcode('tickets', [$this, 'render_shortcode']);
+        // Shortcode used by Ticketchi Lite; pages keep working after an upgrade.
+        add_shortcode('ticketchi', [$this, 'render_shortcode']);
     }
 
     public function render_shortcode($atts) {

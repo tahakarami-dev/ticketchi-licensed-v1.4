@@ -102,6 +102,13 @@ final class Migrations
         // tickets without updated_at take their last activity date.
         $wpdb->query("UPDATE {$p}tkm_tickets SET updated_at = COALESCE(reply_date, create_date) WHERE updated_at IS NULL");
 
+        // Sites upgrading from Ticketchi Lite keep their settings (same keys).
+        $lite = get_option('ticketchi_lite_settings');
+        if (is_array($lite) && $lite) {
+            $current = get_option('tkm_settings', []);
+            update_option('tkm_settings', (is_array($current) ? $current : []) + $lite);
+        }
+
         \Ticketchi\Support\Capabilities::install();
         \Ticketchi\Admin\SettingsSchema::ensure_defaults();
 

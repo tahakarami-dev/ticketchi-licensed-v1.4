@@ -1,3 +1,5 @@
 /tests export-ignore
 /.gitignore export-ignore
 /.gitattributes export-ignore
+/ticketchi-lite export-ignore
+/wordpress-org-assets export-ignore

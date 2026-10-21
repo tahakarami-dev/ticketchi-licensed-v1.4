@@ -22,7 +22,7 @@ final class Links
             return $cached ? (int) $cached : 0;
         }
         global $wpdb;
-        $id = (int) $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type = 'page' AND post_content LIKE '%[tickets%' ORDER BY ID LIMIT 1");
+        $id = (int) $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type = 'page' AND (post_content LIKE '%[tickets%' OR post_content LIKE '%[ticketchi]%') ORDER BY ID LIMIT 1");
         set_transient('tkm_shortcode_page', $id, DAY_IN_SECONDS);
         return $id;
     }

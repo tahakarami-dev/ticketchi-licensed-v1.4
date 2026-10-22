@@ -13,23 +13,13 @@ use TicketchiLite\Promo;
 $ticketchi_lite_kses = ticketchi_lite_allowed_html();
 $ticketchi_lite_counts = Departments::ticket_counts();
 
-$ticketchi_lite_parents = [];
-$ticketchi_lite_children = [];
-foreach ($departments as $ticketchi_lite_dep) {
-    if ((int) $ticketchi_lite_dep->parent && Departments::find($ticketchi_lite_dep->parent)) {
-        $ticketchi_lite_children[(int) $ticketchi_lite_dep->parent][] = $ticketchi_lite_dep;
-    } else {
-        $ticketchi_lite_parents[] = $ticketchi_lite_dep;
-    }
-}
-
-$ticketchi_lite_row = function ($department, $is_child) use ($ticketchi_lite_counts, $ticketchi_lite_kses) {
+$ticketchi_lite_row = function ($department) use ($ticketchi_lite_counts, $ticketchi_lite_kses) {
     $c = isset($ticketchi_lite_counts[(int) $department->ID]) ? $ticketchi_lite_counts[(int) $department->ID] : ['total' => 0, 'open' => 0];
     $edit = ticketchi_lite_admin_url('ticketchi-lite-departments', ['action' => 'edit', 'id' => $department->ID]);
     $delete = wp_nonce_url(ticketchi_lite_admin_url('ticketchi-lite-departments', ['action' => 'delete', 'id' => $department->ID]), 'ticketchi_lite_delete_department');
     ?>
-    <div class="tkm-dept <?php echo $is_child ? 'tkm-dept--child' : ''; ?>">
-        <span class="tkm-dept__icon"><?php echo wp_kses(ticketchi_lite_icon($is_child ? 'tag' : 'building', 18), $ticketchi_lite_kses); ?></span>
+    <div class="tkm-dept">
+        <span class="tkm-dept__icon"><?php echo wp_kses(ticketchi_lite_icon('building', 18), $ticketchi_lite_kses); ?></span>
         <div class="tkm-dept__main">
             <a class="tkm-dept__name" href="<?php echo esc_url($edit); ?>"><?php echo esc_html($department->name); ?></a>
             <?php if (trim((string) $department->description) !== '') : ?>
@@ -43,7 +33,7 @@ $ticketchi_lite_row = function ($department, $is_child) use ($ticketchi_lite_cou
         <span class="tkm-dept__pos tkm-num" title="ترتیب نمایش"><?php echo esc_html(ticketchi_lite_fa($department->position)); ?></span>
         <div class="tkm-dept__actions">
             <a class="tkm-btn tkm-btn--ghost tkm-btn--sm tkm-btn--icon" href="<?php echo esc_url($edit); ?>" aria-label="ویرایش" title="ویرایش"><?php echo wp_kses(ticketchi_lite_icon('edit', 15), $ticketchi_lite_kses); ?></a>
-            <a class="tkm-btn tkm-btn--ghost tkm-btn--sm tkm-btn--icon tkm-danger-btn" href="<?php echo esc_url($delete); ?>" data-confirm="<?php echo esc_attr('دپارتمان «' . $department->name . '» حذف شود؟ زیرمجموعه‌های آن به سطح اول منتقل می‌شوند.'); ?>" aria-label="حذف" title="حذف"><?php echo wp_kses(ticketchi_lite_icon('trash', 15), $ticketchi_lite_kses); ?></a>
+            <a class="tkm-btn tkm-btn--ghost tkm-btn--sm tkm-btn--icon tkm-danger-btn" href="<?php echo esc_url($delete); ?>" data-confirm="<?php echo esc_attr('دپارتمان «' . $department->name . '» حذف شود؟'); ?>" aria-label="حذف" title="حذف"><?php echo wp_kses(ticketchi_lite_icon('trash', 15), $ticketchi_lite_kses); ?></a>
         </div>
     </div>
     <?php
@@ -57,7 +47,7 @@ include TICKETCHI_LITE_PATH . 'views/admin/partials/header.php';
             <a class="tkm-back" href="<?php echo esc_url(ticketchi_lite_admin_url('ticketchi-lite-departments')); ?>"><?php echo wp_kses(ticketchi_lite_icon('arrow-right', 15), $ticketchi_lite_kses); ?> بازگشت</a>
         <?php endif; ?>
         <h1 class="tkm-head__title"><?php echo $editing ? esc_html('ویرایش «' . $editing->name . '»') : 'دپارتمان‌ها'; ?></h1>
-        <p class="tkm-head__desc">مشتری هنگام ثبت تیکت، دپارتمان و در صورت وجود زیرمجموعه آن را انتخاب می‌کند.</p>
+        <p class="tkm-head__desc">مشتری هنگام ثبت تیکت، دپارتمان مربوط را انتخاب می‌کند.</p>
     </div>
 </div>
 
@@ -69,16 +59,9 @@ include TICKETCHI_LITE_PATH . 'views/admin/partials/header.php';
             </div>
             <?php if ($departments) : ?>
                 <div class="tkm-depts">
-                    <?php foreach ($ticketchi_lite_parents as $ticketchi_lite_parent) : ?>
-                        <div class="tkm-dept-group">
-                            <?php
-                            $ticketchi_lite_row($ticketchi_lite_parent, false);
-                            foreach (isset($ticketchi_lite_children[(int) $ticketchi_lite_parent->ID]) ? $ticketchi_lite_children[(int) $ticketchi_lite_parent->ID] : [] as $ticketchi_lite_child) {
-                                $ticketchi_lite_row($ticketchi_lite_child, true);
-                            }
-                            ?>
-                        </div>
-                    <?php endforeach; ?>
+                    <?php foreach ($departments as $ticketchi_lite_dep) {
+                        $ticketchi_lite_row($ticketchi_lite_dep);
+                    } ?>
                 </div>
             <?php else : ?>
                 <div class="tkm-empty">
@@ -89,7 +72,7 @@ include TICKETCHI_LITE_PATH . 'views/admin/partials/header.php';
             <?php endif; ?>
         </section>
 
-        <?php echo wp_kses(Promo::teaser('departments', 'کارشناس اختصاصی برای هر دپارتمان', 'در نسخه حرفه‌ای برای هر دپارتمان کارشناس تعیین کنید؛ تیکت‌ها خودکار بین آن‌ها تقسیم می‌شوند و هر کارشناس فقط صف خودش را می‌بیند.'), $ticketchi_lite_kses); ?>
+        <?php echo wp_kses(Promo::teaser('departments', 'زیرمجموعه و کارشناس اختصاصی برای هر دپارتمان', 'در نسخه حرفه‌ای دپارتمان‌ها زیرمجموعه («نوع تیکت») دارند و برای هر کدام کارشناس تعیین می‌کنید؛ تیکت‌ها خودکار بین کارشناس‌ها تقسیم می‌شوند.'), $ticketchi_lite_kses); ?>
     </div>
 
     <aside class="tkm-ws__side">
@@ -105,18 +88,6 @@ include TICKETCHI_LITE_PATH . 'views/admin/partials/header.php';
                 <div class="tkm-field">
                     <label class="tkm-label" for="tkm-dept-name">عنوان <span class="tkm-req">*</span></label>
                     <input class="tkm-input" id="tkm-dept-name" name="name" type="text" required value="<?php echo esc_attr($editing ? $editing->name : ''); ?>" placeholder="مثلا: پشتیبانی فنی">
-                </div>
-                <div class="tkm-field">
-                    <label class="tkm-label" for="tkm-dept-parent">زیرمجموعه‌ی</label>
-                    <select class="tkm-select" id="tkm-dept-parent" name="parent">
-                        <option value="0">— سطح اول (بدون والد) —</option>
-                        <?php foreach ($ticketchi_lite_parents as $ticketchi_lite_option) :
-                            if ($editing && (int) $editing->ID === (int) $ticketchi_lite_option->ID) {
-                                continue;
-                            } ?>
-                            <option value="<?php echo esc_attr($ticketchi_lite_option->ID); ?>" <?php selected($editing ? (int) $editing->parent : 0, (int) $ticketchi_lite_option->ID); ?>><?php echo esc_html($ticketchi_lite_option->name); ?></option>
-                        <?php endforeach; ?>
-                    </select>
                 </div>
                 <div class="tkm-field">
                     <label class="tkm-label" for="tkm-dept-position">ترتیب نمایش</label>

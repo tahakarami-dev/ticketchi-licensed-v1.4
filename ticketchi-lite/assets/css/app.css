@@ -736,3 +736,17 @@ html.tkm-lock, html.tkm-lock body { overflow: hidden; }
 .tkm-ui .tkm-pro-final h2 { margin: 0; font-size: 22px; color: var(--tkm-text); }
 .tkm-ui .tkm-pro-final .tkm-btn--primary { --b-bg: var(--tkm-gold); --b-bg-h: #b45309; --b-fg: #fff; }
 @media (max-width: 960px) { .tkm-ui .tkm-pro-hero { grid-template-columns: 1fr; padding: 28px 22px; } .tkm-ui .tkm-pro-hero__art { display: none; } }
+
+/* Pro-only entry points (links to the upgrade page). */
+.tkm-ui .tkm-pro-tag { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 6px; background: var(--tkm-gold); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .5px; line-height: 1; }
+.tkm-ui .tkm-nav__item--pro { color: var(--tkm-text-3) !important; }
+.tkm-ui .tkm-nav__item--pro:hover { color: var(--tkm-gold) !important; }
+.tkm-ui .tkm-ib-group--pro .tkm-ib-group__title { display: flex; align-items: center; gap: 5px; color: var(--tkm-gold); }
+.tkm-ui .tkm-ib-view--pro { color: var(--tkm-text-3) !important; }
+.tkm-ui .tkm-ib-view--pro span { flex: 1; }
+.tkm-ui .tkm-ib-view--pro:hover { color: var(--tkm-gold) !important; background: var(--tkm-gold-soft); }
+.tkm-ui .tkm-ib-search--pro { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border-radius: 10px; border: 1px dashed var(--tkm-border-strong, var(--tkm-border)); background: var(--tkm-surface-2); color: var(--tkm-text-3) !important; font-size: 13px; text-decoration: none; }
+.tkm-ui .tkm-ib-search--pro span:first-of-type { flex: 1; }
+.tkm-ui .tkm-ib-search--pro:hover { border-color: var(--tkm-gold); color: var(--tkm-gold) !important; }
+.tkm-ui .tkm-ib-composer__bar { flex-wrap: wrap; gap: 10px; }
+.tkm-ui .tkm-ib-prop__control .tkm-ib-pro-hint, .tkm-ui .tkm-ib-block .tkm-ib-pro-hint { display: inline-flex; margin-top: 4px; }

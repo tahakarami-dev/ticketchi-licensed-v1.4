@@ -7,7 +7,8 @@ defined('ABSPATH') || exit;
 /**
  * Every Ticketchi Lite setting, grouped for the settings screen, stored in the
  * «ticketchi_lite_settings» option. Keys match Ticketchi Pro, which imports
- * them when a site upgrades.
+ * them when a site upgrades. Everything else (brand colours, attachments,
+ * SMS, SLA…) is part of Ticketchi Pro.
  *
  * Field: id, type, label, desc, default, options, unit, placeholder, ltr,
  *        show_if => [field, value]
@@ -31,66 +32,21 @@ final class Settings
                 ],
             ],
             [
-                'id' => 'brand', 'title' => 'ظاهر و برند', 'icon' => 'sparkles', 'preview' => 'brand',
-                'desc' => 'رنگ‌ها روی پنل مشتری، صندوق پشتیبانی و ایمیل‌ها اعمال می‌شوند.',
-                'groups' => [
-                    ['title' => 'رنگ‌ها', 'fields' => [
-                        ['id' => 'primary_color', 'type' => 'color', 'label' => 'رنگ اصلی', 'desc' => 'دکمه‌ها، لینک‌ها و حالت فعال.', 'default' => '#2A48CD'],
-                        ['id' => 'secondary_color', 'type' => 'color', 'label' => 'رنگ هاور', 'desc' => 'خالی بگذارید تا خودکار ساخته شود.', 'default' => ''],
-                        ['id' => 'text_color', 'type' => 'color', 'label' => 'رنگ متن روی رنگ اصلی', 'default' => '#ffffff'],
-                    ]],
-                    ['title' => 'عنوان پنل مشتری', 'fields' => [
-                        ['id' => 'title_dashboard', 'type' => 'text', 'label' => 'عنوان', 'default' => 'داشبورد تیکت‌ها'],
-                        ['id' => 'description_dashboard', 'type' => 'text', 'label' => 'توضیح کوتاه', 'default' => 'مدیریت تیکت‌های پشتیبانی شما'],
-                    ]],
-                ],
-            ],
-            [
-                'id' => 'upload', 'title' => 'پیوست فایل', 'icon' => 'paperclip',
-                'desc' => 'هر پیام می‌تواند یک فایل پیوست داشته باشد.',
-                'groups' => [
-                    ['title' => 'محدودیت‌ها', 'fields' => [
-                        ['id' => 'upload_max_size', 'type' => 'number', 'label' => 'حداکثر حجم فایل', 'unit' => 'مگابایت', 'min' => 1, 'max' => 64, 'default' => '5'],
-                        ['id' => 'upload_allowed_ext', 'type' => 'text', 'label' => 'پسوندهای مجاز', 'desc' => 'با ویرگول جدا کنید؛ مثلا jpg,png,pdf,zip', 'ltr' => true, 'default' => 'jpg,jpeg,png,gif,webp,pdf,zip,txt'],
-                    ]],
-                ],
-            ],
-            [
-                'id' => 'statuses', 'title' => 'وضعیت‌ها', 'icon' => 'flag',
-                'desc' => 'رنگ هر وضعیت در پنل مشتری و صندوق پشتیبانی.',
-                'groups' => [
-                    ['title' => 'رنگ وضعیت‌ها', 'columns' => 2, 'fields' => [
-                        ['id' => 'open-color', 'type' => 'color', 'label' => 'باز', 'default' => '#4bcc58'],
-                        ['id' => 'close-color', 'type' => 'color', 'label' => 'پاسخ داده شده', 'default' => '#3150d8'],
-                        ['id' => 'answerd-color', 'type' => 'color', 'label' => 'بسته شده', 'default' => '#ff2121'],
-                        ['id' => 'finish-color', 'type' => 'color', 'label' => 'پایان یافته', 'default' => '#000000'],
-                    ]],
-                ],
-            ],
-            [
                 'id' => 'notify', 'title' => 'ایمیل‌ها', 'icon' => 'bell',
-                'desc' => 'ایمیل‌ها راست‌چین و با رنگ برند شما ارسال می‌شوند.',
+                'desc' => 'ایمیل‌های پشتیبانی به ایمیل مدیر سایت (تنظیمات › عمومی وردپرس) ارسال می‌شوند.',
                 'groups' => [
-                    ['title' => 'ایمیل به مشتری', 'fields' => [
-                        ['id' => 'notify_customer_created', 'type' => 'switch', 'label' => 'تایید ثبت تیکت', 'default' => '1'],
-                        ['id' => 'notify_customer_reply', 'type' => 'switch', 'label' => 'پاسخ جدید پشتیبانی', 'default' => '1'],
-                    ]],
-                    ['title' => 'ایمیل به پشتیبانی', 'fields' => [
-                        ['id' => 'notify_agent_email', 'type' => 'switch', 'label' => 'تیکت جدید و پاسخ مشتری', 'default' => '1'],
-                        ['id' => 'notify_staff_address', 'type' => 'text', 'label' => 'ایمیل دریافت‌کننده', 'desc' => 'خالی بگذارید تا به ایمیل مدیر سایت ارسال شود.', 'ltr' => true, 'placeholder' => get_option('admin_email'), 'default' => '', 'show_if' => ['notify_agent_email', '1']],
-                    ]],
-                    ['title' => 'فرستنده', 'columns' => 2, 'fields' => [
-                        ['id' => 'email_from_name', 'type' => 'text', 'label' => 'نام فرستنده', 'placeholder' => get_bloginfo('name'), 'default' => ''],
-                        ['id' => 'email_from_address', 'type' => 'text', 'label' => 'ایمیل فرستنده', 'ltr' => true, 'placeholder' => get_option('admin_email'), 'default' => ''],
+                    ['fields' => [
+                        ['id' => 'notify_customer_reply', 'type' => 'switch', 'label' => 'ایمیل به مشتری وقتی پشتیبانی پاسخ می‌دهد', 'default' => '1'],
+                        ['id' => 'notify_agent_email', 'type' => 'switch', 'label' => 'ایمیل به مدیر برای تیکت جدید و پاسخ مشتری', 'default' => '1'],
                     ]],
                 ],
             ],
             [
                 'id' => 'integrations', 'title' => 'شورت‌کد', 'icon' => 'hash',
-                'desc' => 'افزودن پنل تیکت به هر صفحه‌ای از سایت.',
+                'desc' => 'افزودن پنل تیکت به یک برگه از سایت.',
                 'groups' => [
                     ['fields' => [
-                        ['type' => 'note', 'html' => '<p><code class="tkm-copy" data-copy="[ticketchi]">[ticketchi]</code> پنل کامل تیکت مشتری (فهرست، ثبت تیکت و گفتگو). اگر ووکامرس فعال باشد، پنل در «حساب کاربری › تیکت‌های پشتیبانی» هم در دسترس است.</p>'],
+                        ['type' => 'note', 'html' => '<p><code class="tkm-copy" data-copy="[ticketchi]">[ticketchi]</code> را در یک برگه قرار دهید تا مشتری‌ها تیکت ثبت و پیگیری کنند.</p>'],
                     ]],
                 ],
             ],

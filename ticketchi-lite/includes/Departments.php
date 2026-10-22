@@ -62,30 +62,27 @@ final class Departments
     }
 
     /**
-     * @param array $data name, parent, position, description
+     * Lite departments are flat; sub-departments are a Ticketchi Pro feature
+     * (an existing «parent» is left untouched on edit).
+     *
+     * @param array $data name, position, description
      * @return int|false department id
      */
     public static function save(array $data, $id = 0)
     {
         global $wpdb;
         $id = (int) $id;
-        $parent = isset($data['parent']) ? absint($data['parent']) : 0;
-        // Only one level of nesting, and never under itself.
-        if ($parent && ($parent === $id || !self::find($parent) || (int) self::find($parent)->parent)) {
-            $parent = 0;
-        }
-
         $row = [
             'name'        => sanitize_text_field($data['name']),
-            'parent'      => $parent,
             'position'    => isset($data['position']) && $data['position'] !== '' ? (int) ticketchi_lite_en_digits($data['position']) : 1,
             'description' => isset($data['description']) ? sanitize_textarea_field($data['description']) : null,
         ];
 
         if ($id) {
-            return $wpdb->update(self::table(), $row, ['ID' => $id], ['%s', '%d', '%d', '%s'], ['%d']) === false ? false : $id;
+            return $wpdb->update(self::table(), $row, ['ID' => $id], ['%s', '%d', '%s'], ['%d']) === false ? false : $id;
         }
-        return $wpdb->insert(self::table(), $row, ['%s', '%d', '%d', '%s']) ? (int) $wpdb->insert_id : false;
+        $row['parent'] = 0;
+        return $wpdb->insert(self::table(), $row, ['%s', '%d', '%s', '%d']) ? (int) $wpdb->insert_id : false;
     }
 
     public static function delete($id)

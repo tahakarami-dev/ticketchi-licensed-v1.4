@@ -3,14 +3,11 @@
     'use strict';
 
     var CFG = window.TICKETCHI_LITE_FRONT || {};
-    var UPLOAD = $.extend({ max_size: 5242880, allowed_ext: [] }, CFG.upload || {});
 
     var ICONS = {
         success: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
         error: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
-        info: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 16v-4M12 8h.01"/></svg>',
-        clip: '<svg class="tkm-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
-        x: '<svg class="tkm-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+        info: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 16v-4M12 8h.01"/></svg>'
     };
 
     var FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
@@ -62,10 +59,6 @@
     } catch (e) { /* storage unavailable */ }
 
     /* ───────── Small behaviours ───────── */
-    $(document).on('change', '[data-autosubmit] select', function () {
-        $(this).closest('form').trigger('submit');
-    });
-
     function autogrow(el) {
         el.style.height = 'auto';
         el.style.height = Math.min(el.scrollHeight + 2, 560) + 'px';
@@ -85,72 +78,9 @@
     }
 
     $(document).on('change', 'input[name="tkm-parent-department"]', function () {
-        var parentId = $(this).val();
-        var hasChildren = $(this).data('has-children') == 1;
         $('.tkm-tiles').removeClass('is-invalid');
-        $('input[name="child-department"]').prop('checked', false);
-        $('[data-subdeps] .tkm-chips').prop('hidden', true).removeClass('is-invalid');
-        $('[data-subdeps]').prop('hidden', !hasChildren);
-        if (hasChildren) $('[data-subdeps] .tkm-chips[data-parent="' + parentId + '"]').prop('hidden', false);
-        showDepartmentNote(hasChildren ? '' : $(this).data('description'));
-    });
-
-    $(document).on('change', 'input[name="child-department"]', function () {
-        $(this).closest('.tkm-chips').removeClass('is-invalid');
         showDepartmentNote($(this).data('description'));
     });
-
-    function selectedDepartment() {
-        var $parent = $('input[name="tkm-parent-department"]:checked');
-        if (!$parent.length) return { error: 'parent' };
-        if ($parent.data('has-children') == 1) {
-            var $child = $('input[name="child-department"]:checked');
-            return $child.length ? { id: $child.val() } : { error: 'child', parent: $parent.val() };
-        }
-        return { id: $parent.val() };
-    }
-
-    /* ───────── Attachment (one file) ───────── */
-    function setFile($attach, file) {
-        $attach.data('tkmFile', file || null);
-        var $list = $attach.find('[data-file-list]').empty();
-        if (file) {
-            $list.append('<span class="tkm-file tkm-file--pending">' + ICONS.clip + '<span>' + esc(file.name) + '</span><button type="button" data-file-remove aria-label="حذف فایل">' + ICONS.x + '</button></span>');
-        }
-    }
-
-    function pickFile($attach, fileList) {
-        var file = fileList && fileList[0];
-        if (!file) return;
-        var ext = (file.name.split('.').pop() || '').toLowerCase();
-        if (UPLOAD.allowed_ext.length && $.inArray(ext, UPLOAD.allowed_ext) === -1) {
-            toast('error', 'پسوند غیرمجاز', 'پسوند «' + ext + '» مجاز نیست.');
-            return;
-        }
-        if (file.size > UPLOAD.max_size) {
-            toast('error', 'حجم فایل زیاد است', 'حجم «' + file.name + '» بیشتر از حد مجاز است.');
-            return;
-        }
-        setFile($attach, file);
-    }
-
-    $(document).on('change', '[data-file-input]', function () {
-        pickFile($(this).closest('[data-attach]'), this.files);
-        this.value = '';
-    });
-    $(document).on('click', '[data-file-remove]', function () {
-        setFile($(this).closest('[data-attach]'), null);
-    });
-    $(document).on('dragenter dragover', '[data-dropzone]', function () {
-        $(this).addClass('is-over');
-    }).on('dragleave drop', '[data-dropzone]', function () {
-        $(this).removeClass('is-over');
-    });
-
-    function appendFile($form, formData) {
-        var file = $form.find('[data-attach]').data('tkmFile');
-        if (file) formData.append('file', file, file.name);
-    }
 
     function post(data) {
         return $.ajax({ type: 'post', url: CFG.ajax_url, data: data, contentType: false, processData: false });
@@ -164,15 +94,10 @@
         var $submit = $form.find('[data-submit]');
         if ($submit.prop('disabled')) return;
 
-        var dep = selectedDepartment();
-        if (dep.error === 'parent') {
+        var $dep = $form.find('input[name="tkm-parent-department"]:checked');
+        if (!$dep.length) {
             invalid($form.find('.tkm-tiles'));
             toast('error', 'دپارتمان را انتخاب کنید', 'مشخص کنید درخواست شما مربوط به کدام بخش است.');
-            return;
-        }
-        if (dep.error === 'child') {
-            invalid($form.find('.tkm-chips[data-parent="' + dep.parent + '"]'));
-            toast('error', 'نوع تیکت را انتخاب کنید');
             return;
         }
 
@@ -187,11 +112,9 @@
         var data = new FormData();
         data.append('action', 'ticketchi_lite_submit_ticket');
         data.append('nonce', CFG.nonce);
-        data.append('department', dep.id);
+        data.append('department', $dep.val());
         data.append('title_ticket', $form.find('#title-ticket').val() || '');
-        data.append('priority', $form.find('input[name="priority"]:checked').val() || 'medium');
         data.append('content', $content.val());
-        appendFile($form, data);
 
         setLoading($submit, true);
         post(data).done(function (response) {
@@ -219,11 +142,10 @@
         if ($submit.prop('disabled')) return;
 
         var $body = $form.find('#body');
-        var $attach = $form.find('[data-attach]');
-        if ($.trim($body.val()) === '' && !$attach.data('tkmFile')) {
+        if ($.trim($body.val()) === '') {
             invalid($body.closest('.tkm-composer'));
             $body.trigger('focus');
-            toast('error', 'پاسخ خالی است', 'متن پاسخ را بنویسید یا فایلی پیوست کنید.');
+            toast('error', 'پاسخ خالی است', 'متن پاسخ را بنویسید.');
             return;
         }
 
@@ -234,7 +156,6 @@
         data.append('ticket_id', $form.find('#ticket_id').val());
         data.append('status', closing ? 'closed' : '');
         data.append('body', $body.val());
-        appendFile($form, data);
 
         setLoading($submit, true);
         post(data).done(function (response) {
@@ -248,7 +169,6 @@
                 $body.val('');
                 autogrow($body.get(0));
                 $form.find('#status').prop('checked', false);
-                setFile($attach, null);
 
                 var last = $replies.find('.tkm-msg').last().get(0);
                 if (last && last.scrollIntoView) last.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -1,13 +1,9 @@
-/* Ticketchi Lite — admin shell: toasts, confirm dialog, theme, user menu. */
+/* Ticketchi Lite — admin shell: toasts, confirm dialog, user menu. */
 jQuery(function ($) {
     'use strict';
 
     var $app = $('#tkm-admin');
     function esc(t) { return $('<div>').text(t == null ? '' : String(t)).html(); }
-
-    if (document.documentElement.classList.contains('tkm-dark')) {
-        $app.attr('data-theme', 'dark');
-    }
 
     /* ───────── Toasts ───────── */
     function toast(type, title, text) {
@@ -53,14 +49,6 @@ jQuery(function ($) {
         e.preventDefault();
         var href = $(this).attr('href');
         confirmDialog($(this).data('confirm')).done(function () { window.location.href = href; });
-    });
-
-    /* ───────── Theme ───────── */
-    $(document).on('click', '[data-theme-toggle]', function () {
-        var dark = $app.attr('data-theme') !== 'dark';
-        $app.attr('data-theme', dark ? 'dark' : 'light');
-        document.documentElement.classList.toggle('tkm-dark', dark);
-        try { localStorage.setItem('tkm-theme', dark ? 'dark' : 'light'); } catch (err) { /* storage unavailable */ }
     });
 
     /* ───────── User menu ───────── */

@@ -9,6 +9,7 @@
     var fa = K.fa, esc = K.esc, icon = K.icon;
     var $ = function (sel, ctx) { return (ctx || root).querySelector(sel); };
     var $$ = function (sel, ctx) { return Array.prototype.slice.call((ctx || root).querySelectorAll(sel)); };
+    var PRO = K.app.admin + '?page=ticketchi-lite-pro';
 
     var VIEWS = [
         { key: 'active', label: 'تیکت‌های باز', icon: 'inbox' },
@@ -20,29 +21,18 @@
     var VIEW_LABEL = {};
     VIEWS.forEach(function (v) { VIEW_LABEL[v.key] = v.label; });
 
-    var state = {
-        meta: null,
-        scope: { view: 'active' },
-        filters: { priority: '', sort: 'updated', search: '' },
-        items: [], total: 0, page: 1, pages: 1,
-        loading: false,
-        current: null,
-        detail: null,
-        file: null
-    };
+    var state = { meta: null, view: 'active', items: [], total: 0, page: 1, pages: 1, loading: false, current: null, detail: null };
 
     var els = {
         views: $('[data-views]'),
-        departments: $('[data-departments]'),
         items: $('[data-items]'),
         total: $('[data-total]'),
         title: $('[data-list-title]'),
-        search: $('[data-search]'),
         convo: $('[data-convo]')
     };
     var placeholderHtml = els.convo.innerHTML;
 
-    /* ═════════════ Meta & sidebar ═════════════ */
+    /* ═════════════ Sidebar ═════════════ */
 
     function loadMeta() {
         return K.api('meta').then(function (meta) {
@@ -53,78 +43,35 @@
     }
 
     function renderNav() {
-        var m = state.meta, counts = m.counts || {};
+        var counts = state.meta.counts || {};
         els.views.innerHTML = VIEWS.map(function (v) {
             var c = counts[v.key];
-            var active = state.scope.view === v.key && !state.scope.department;
-            return '<a href="#/view/' + v.key + '" class="tkm-ib-view' + (active ? ' is-active' : '') + '" data-view="' + v.key + '">' +
+            return '<a href="#/view/' + v.key + '" class="tkm-ib-view' + (state.view === v.key ? ' is-active' : '') + '">' +
                 icon(v.icon, 16) + '<span>' + esc(v.label) + '</span>' +
                 (c ? '<span class="tkm-ib-count tkm-num">' + fa(c) + '</span>' : '') + '</a>';
         }).join('');
-
-        els.departments.innerHTML = m.departments.length ? m.departments.map(function (d) {
-            var html = depLink(d, false);
-            d.children.forEach(function (c) { html += depLink(c, true); });
-            return html;
-        }).join('') : '<p class="tkm-ib-none">دپارتمانی تعریف نشده است.</p>';
-
-        // Compact scope picker for narrow screens where the sidebar is hidden.
-        var current = '#' + lastScopeHash();
-        var opt = function (hash, label) { return '<option value="' + hash + '"' + (hash === current ? ' selected' : '') + '>' + esc(label) + '</option>'; };
-        var html = '<optgroup label="نماها">' + VIEWS.map(function (v) {
-            return opt('#/view/' + v.key, v.label + (counts[v.key] ? ' (' + fa(counts[v.key]) + ')' : ''));
-        }).join('') + '</optgroup>';
-        if (m.departments.length) {
-            html += '<optgroup label="دپارتمان‌ها">' + m.departments.map(function (d) {
-                return opt('#/department/' + d.id, d.name) + d.children.map(function (c) { return opt('#/department/' + c.id, '— ' + c.name); }).join('');
-            }).join('') + '</optgroup>';
-        }
-        $('[data-scope-select]').innerHTML = html;
-    }
-
-    function depLink(d, child) {
-        return '<a href="#/department/' + d.id + '" class="tkm-ib-view' + (child ? ' tkm-ib-view--child' : '') + (+state.scope.department === d.id ? ' is-active' : '') + '">' +
-            (child ? '<span class="tkm-ib-branch" aria-hidden="true"></span>' : icon('inbox', 15)) + '<span>' + esc(d.name) + '</span></a>';
-    }
-
-    function findDepartment(id) {
-        var found = null;
-        (state.meta ? state.meta.departments : []).forEach(function (d) {
-            if (d.id === +id) found = d;
-            d.children.forEach(function (c) { if (c.id === +id) found = c; });
-        });
-        return found;
+        // Compact view picker for narrow screens where the sidebar is hidden.
+        $('[data-scope-select]').innerHTML = VIEWS.map(function (v) {
+            return '<option value="#/view/' + v.key + '"' + (state.view === v.key ? ' selected' : '') + '>' + esc(v.label) + (counts[v.key] ? ' (' + fa(counts[v.key]) + ')' : '') + '</option>';
+        }).join('');
     }
 
     /* ═════════════ List ═════════════ */
 
     var listSeq = 0;
-    function loadList(opts) {
-        opts = opts || {};
-        var page = opts.append ? state.page + 1 : 1;
+    function loadList(append) {
         var my = ++listSeq;
         state.loading = true;
-        if (!opts.append) els.items.innerHTML = skeleton(6);
-        var q = {
-            view: state.scope.view,
-            department: state.scope.department,
-            priority: state.filters.priority,
-            sort: state.filters.sort,
-            search: K.en(state.filters.search),
-            page: page,
-            per_page: 30
-        };
-        return K.api('inbox', { query: q }).then(function (data) {
+        if (!append) els.items.innerHTML = skeleton(6);
+        return K.api('inbox', { query: { view: state.view, page: append ? state.page + 1 : 1, per_page: 30 } }).then(function (data) {
             if (my !== listSeq) return;
             state.loading = false;
-            state.items = opts.append ? state.items.concat(data.items) : data.items;
+            state.items = append ? state.items.concat(data.items) : data.items;
             state.page = data.page;
             state.total = data.total;
             state.pages = Math.max(1, data.pages);
-            if (state.meta) {
-                state.meta.counts = data.counts;
-                renderNav();
-            }
+            state.meta.counts = data.counts;
+            renderNav();
             renderList();
         }).catch(function (e) {
             if (my !== listSeq) return;
@@ -145,27 +92,14 @@
         return state.items.filter(function (t) { return t.id === +id; })[0] || null;
     }
 
-    function listTitle() {
-        if (state.scope.department) {
-            var d = findDepartment(state.scope.department);
-            return d ? 'دپارتمان ' + d.name : 'دپارتمان';
-        }
-        return VIEW_LABEL[state.scope.view] || 'تیکت‌ها';
-    }
-
     function renderList() {
-        els.title.textContent = listTitle();
+        els.title.textContent = VIEW_LABEL[state.view];
         els.total.textContent = fa(state.total);
 
         if (!state.items.length) {
-            var searching = state.filters.search || state.filters.priority;
-            els.items.innerHTML = '<div class="tkm-ib-empty">' + icon(searching ? 'inbox' : 'check', 26) +
-                '<strong>' + (searching ? 'نتیجه‌ای پیدا نشد' : 'همه‌چیز مرتب است') + '</strong>' +
-                '<span>' + (searching ? 'عبارت جستجو یا فیلترها را تغییر دهید.' : 'در این نما تیکتی وجود ندارد.') + '</span>' +
-                (searching ? '<button type="button" class="tkm-btn tkm-btn--sm" data-clear-filters>پاک کردن فیلترها</button>' : '') + '</div>';
+            els.items.innerHTML = '<div class="tkm-ib-empty">' + icon('check', 26) + '<strong>همه‌چیز مرتب است</strong><span>در این نما تیکتی وجود ندارد.</span></div>';
             return;
         }
-
         var html = state.items.map(rowHtml).join('');
         if (state.page < state.pages) {
             html += '<button type="button" class="tkm-ib-more" data-more>نمایش موارد بیشتر <span class="tkm-num">(' + fa(state.total - state.items.length) + ')</span></button>';
@@ -184,9 +118,7 @@
                 '<div class="tkm-ib-item__title">' + esc(t.title) + '</div>' +
                 '<div class="tkm-ib-item__snippet">' + (t.last_from === 'staff' ? '<span class="tkm-ib-you">پشتیبانی: </span>' : '') + esc(t.snippet) + '</div>' +
                 '<div class="tkm-ib-item__meta">' +
-                    '<span class="tkm-num tkm-ib-item__id">#' + fa(t.id) + '</span>' +
-                    K.status(t.status) +
-                    K.priority(t.priority, false) +
+                    '<span class="tkm-num tkm-ib-item__id">#' + fa(t.id) + '</span>' + K.status(t.status) +
                     (t.department ? '<span class="tkm-ib-item__dep">' + esc(t.department.name) + '</span>' : '') +
                 '</div>' +
             '</div></div>';
@@ -195,11 +127,9 @@
     /* ═════════════ Conversation ═════════════ */
 
     var ticketSeq = 0;
-    function openTicket(id, opts) {
-        opts = opts || {};
+    function openTicket(id) {
         id = +id;
         var my = ++ticketSeq;
-        var switching = state.current !== id;
         state.current = id;
         root.classList.add('is-reading');
         $$('.tkm-ib-item').forEach(function (n) {
@@ -207,13 +137,9 @@
             n.classList.toggle('is-active', on);
             n.setAttribute('aria-selected', String(on));
         });
-        if (!opts.silent) {
-            els.convo.innerHTML = '<div class="tkm-ib-loading"><span class="tkm-spinner"></span></div>';
-        }
+        els.convo.innerHTML = '<div class="tkm-ib-loading"><span class="tkm-spinner"></span></div>';
         return K.api('tickets/' + id).then(function (t) {
-            if (my !== ticketSeq) return;
-            if (switching) state.file = null;
-            show(t, false);
+            if (my === ticketSeq) show(t, false);
         }).catch(function (e) {
             if (my !== ticketSeq) return;
             els.convo.innerHTML = '<div class="tkm-ib-placeholder"><div class="tkm-empty__art">' + icon('alert', 28) + '</div><h3>' + (e.status === 404 ? 'تیکت پیدا نشد' : 'باز کردن تیکت ممکن نشد') + '</h3><p>' + esc(e.message) + '</p></div>';
@@ -225,14 +151,13 @@
         state.detail = t;
         renderConvo(keepComposer);
         var row = byId(t.id);
-        if (row) {
-            ['title', 'status', 'priority', 'department', 'customer', 'snippet', 'last_from', 'replies', 'updated_at'].forEach(function (k) { row[k] = t[k]; });
-            var node = els.items.querySelector('[data-id="' + row.id + '"]');
-            if (node) {
-                var tmp = document.createElement('div');
-                tmp.innerHTML = rowHtml(row);
-                node.replaceWith(tmp.firstChild);
-            }
+        if (!row) return;
+        ['title', 'status', 'department', 'customer', 'snippet', 'last_from', 'replies', 'updated_at'].forEach(function (k) { row[k] = t[k]; });
+        var node = els.items.querySelector('[data-id="' + row.id + '"]');
+        if (node) {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = rowHtml(row);
+            node.replaceWith(tmp.firstChild);
         }
     }
 
@@ -244,12 +169,10 @@
         $$('.tkm-ib-item.is-active').forEach(function (n) { n.classList.remove('is-active'); });
     }
 
-    function isClosed(t) { return ['closed', 'finish'].indexOf(t.status.slug) !== -1; }
-
     function renderConvo(keepComposer) {
         var t = state.detail;
         var draft = keepComposer ? composerValue() : '';
-        var closed = isClosed(t);
+        var closed = ['closed', 'finish'].indexOf(t.status.slug) !== -1;
         var trashed = t.status.slug === 'trash';
 
         els.convo.innerHTML =
@@ -262,9 +185,8 @@
                     '<span>·</span><time title="' + esc(K.date(t.created_at, true)) + '">ایجاد ' + K.ago(t.created_at) + '</time></div>' +
                 '</div>' +
                 '<div class="tkm-ib-convo__actions">' +
-                    (trashed ? '<button type="button" class="tkm-btn tkm-btn--sm" data-set-status="open">' + icon('refresh', 15) + '<span class="tkm-hide-md">بازگردانی</span></button>'
-                        : (closed ? '<button type="button" class="tkm-btn tkm-btn--sm" data-set-status="open">' + icon('refresh', 15) + '<span class="tkm-hide-md">بازگشایی</span></button>'
-                                  : '<button type="button" class="tkm-btn tkm-btn--sm" data-set-status="closed">' + icon('check', 15) + '<span class="tkm-hide-md">بستن تیکت</span></button>')) +
+                    (trashed || closed ? '<button type="button" class="tkm-btn tkm-btn--sm" data-set-status="open">' + icon('refresh', 15) + '<span class="tkm-hide-md">' + (trashed ? 'بازگردانی' : 'بازگشایی') + '</span></button>'
+                                       : '<button type="button" class="tkm-btn tkm-btn--sm" data-set-status="closed">' + icon('check', 15) + '<span class="tkm-hide-md">بستن تیکت</span></button>') +
                     '<a class="tkm-btn tkm-btn--ghost tkm-btn--icon tkm-btn--sm" href="' + esc(t.customer_url) + '" target="_blank" rel="noopener" title="نمایش از دید مشتری" aria-label="نمایش از دید مشتری">' + icon('external', 16) + '</a>' +
                     '<button type="button" class="tkm-btn tkm-btn--ghost tkm-btn--icon tkm-btn--sm tkm-ib-side-toggle" data-side-toggle title="جزئیات" aria-label="نمایش جزئیات">' + icon('more', 18) + '</button>' +
                 '</div>' +
@@ -278,18 +200,13 @@
             '</div>';
 
         var ta = $('[data-composer-input]', els.convo);
-        if (ta) {
-            ta.value = draft;
-            autosize(ta);
-        }
-        renderFile();
+        if (ta) { ta.value = draft; autosize(ta); }
         var thread = $('[data-thread]', els.convo);
         thread.scrollTop = thread.scrollHeight;
     }
 
     function threadHtml(t) {
-        var html = '';
-        var lastDay = '';
+        var html = '', lastDay = '';
         t.messages.forEach(function (m) {
             var day = K.date(m.date);
             if (day !== lastDay) {
@@ -318,16 +235,16 @@
             '</div></article>';
     }
 
+    function proLink(anchor, label) {
+        return '<a class="tkm-ib-pro-hint" href="' + esc(PRO + '#pro-' + anchor) + '">' + icon('lock', 13) + esc(label) + '</a>';
+    }
+
     function composerHtml(closed) {
-        var up = state.meta.upload;
         return '<div class="tkm-ib-composer" data-composer>' +
             (closed ? '<div class="tkm-ib-composer__tabs"><span class="tkm-ib-composer__warn">' + icon('alert', 13) + 'این تیکت بسته است؛ پاسخ شما آن را بسته نگه می‌دارد.</span></div>' : '') +
             '<textarea class="tkm-ib-composer__input" data-composer-input rows="3" placeholder="پاسخ خود را بنویسید… (Ctrl + Enter برای ارسال)" aria-label="متن پاسخ"></textarea>' +
-            '<div class="tkm-ib-composer__files" data-composer-files></div>' +
             '<div class="tkm-ib-composer__bar">' +
-                '<label class="tkm-btn tkm-btn--ghost tkm-btn--icon tkm-btn--sm" title="پیوست فایل' + (up.hint ? ' — ' + esc(up.hint) : '') + '">' + icon('paperclip', 17) +
-                    '<input type="file" class="tkm-sr" data-composer-file' + (up.accept ? ' accept="' + esc(up.accept) + '"' : '') + '></label>' +
-                '<a class="tkm-ib-pro-hint" href="' + esc(K.app.admin) + '?page=ticketchi-lite-pro">' + icon('lock', 13) + 'یادداشت داخلی و پاسخ آماده در نسخه حرفه‌ای</a>' +
+                proLink('customer-ux', 'پیوست فایل') + proLink('canned', 'پاسخ آماده') + proLink('notes', 'یادداشت داخلی') +
                 '<span class="tkm-grow"></span>' +
                 (closed ? '' : '<button type="button" class="tkm-btn tkm-btn--sm" data-send="close" title="ارسال پاسخ و بستن تیکت">ارسال و بستن</button>') +
                 '<button type="button" class="tkm-btn tkm-btn--primary tkm-btn--sm" data-send>' + icon('send', 15) + 'ارسال پاسخ</button>' +
@@ -335,37 +252,26 @@
     }
 
     function sideHtml(t) {
-        var m = state.meta;
-        var statusOpts = m.statuses.map(function (s) {
+        var statuses = state.meta.statuses;
+        var opts = statuses.map(function (s) {
             return '<option value="' + esc(s.slug) + '"' + (s.slug === t.status.slug ? ' selected' : '') + '>' + esc(s.name) + '</option>';
         }).join('');
-        if (!m.statuses.some(function (s) { return s.slug === t.status.slug; })) {
-            statusOpts = '<option selected value="' + esc(t.status.slug) + '">' + esc(t.status.name) + '</option>' + statusOpts;
+        if (!statuses.some(function (s) { return s.slug === t.status.slug; })) {
+            opts = '<option selected value="' + esc(t.status.slug) + '">' + esc(t.status.name) + '</option>' + opts;
         }
-
-        var depOpts = m.departments.map(function (d) {
-            var o = '<option value="' + d.id + '"' + (t.department && t.department.id === d.id ? ' selected' : '') + '>' + esc(d.name) + '</option>';
-            d.children.forEach(function (c) { o += '<option value="' + c.id + '"' + (t.department && t.department.id === c.id ? ' selected' : '') + '>— ' + esc(c.name) + '</option>'; });
-            return o;
-        }).join('');
-        if (!t.department) depOpts = '<option value="" selected>— بدون دپارتمان —</option>' + depOpts;
-
         var c = t.customer;
         return '<div class="tkm-ib-pane">' +
             '<div class="tkm-ib-props">' +
-                prop('وضعیت', '<select class="tkm-select tkm-select--sm" data-prop="status">' + statusOpts + '</select>') +
-                prop('اولویت', '<div class="tkm-ib-seg" role="radiogroup" aria-label="اولویت">' + ['low', 'medium', 'high'].map(function (p) {
-                    return '<button type="button" role="radio" aria-checked="' + (t.priority === p) + '" class="tkm-ib-seg__btn tkm-ib-seg__btn--' + p + (t.priority === p ? ' is-active' : '') + '" data-priority="' + p + '">' + K.priorityLabel[p] + '</button>';
-                }).join('') + '</div>') +
-                prop('دپارتمان', '<select class="tkm-select tkm-select--sm" data-prop="department_id">' + depOpts + '</select>') +
+                prop('وضعیت', '<select class="tkm-select tkm-select--sm" data-prop="status">' + opts + '</select>') +
+                prop('مسئول', proLink('team', 'سپردن به کارشناس')) +
+                prop('اولویت', proLink('team', 'تغییر اولویت و دپارتمان')) +
             '</div>' +
             (c ? '<div class="tkm-ib-block"><div class="tkm-ib-block__title">' + icon('user', 14) + 'مشتری</div>' +
                 '<div class="tkm-ib-customer__head">' + K.avatar(c, 'md') + '<div><strong>' + esc(c.name) + '</strong>' +
-                (c.email ? '<a class="tkm-ltr tkm-ib-link" href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>' : '') + '</div></div></div>' : '') +
+                (c.email ? '<a class="tkm-ltr tkm-ib-link" href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>' : '') + '</div></div>' +
+                proLink('customer', 'سفارش‌ها و سابقه مشتری') + '</div>' : '') +
             '<dl class="tkm-ib-facts">' +
                 fact('ایجاد', K.date(t.created_at, true)) +
-                fact('اولین پاسخ', t.first_response_at ? K.date(t.first_response_at, true) : '—') +
-                fact('حل‌شده', t.resolved_at ? K.date(t.resolved_at, true) : '—') +
                 fact('پیام‌ها', fa(t.messages.length)) +
             '</dl>' +
             (t.status.slug === 'trash'
@@ -383,14 +289,13 @@
 
     var STATUS_MSG = { closed: 'تیکت بسته شد', open: 'تیکت دوباره باز شد', trash: 'تیکت به زباله‌دان رفت' };
 
-    function patch(changes, okMsg) {
+    function setStatus(status) {
         var id = state.current;
-        return K.api('tickets/' + id, { method: 'PATCH', body: changes }).then(function (t) {
+        return K.api('tickets/' + id, { method: 'PATCH', body: { status: status } }).then(function (t) {
             if (state.current !== id) return;
             show(t, true);
-            if (okMsg) K.toast('success', okMsg);
+            if (STATUS_MSG[status]) K.toast('success', STATUS_MSG[status]);
             refreshCounts();
-            return t;
         }).catch(function (e) {
             K.toast('error', 'تغییر ذخیره نشد', e.message);
             if (state.detail) renderConvo(true);
@@ -405,7 +310,7 @@
         var ta = $('[data-composer-input]', els.convo);
         if (!ta) return;
         var body = ta.value.trim();
-        if (!body && !state.file) {
+        if (!body) {
             K.toast('error', 'متن پاسخ خالی است');
             ta.focus();
             return;
@@ -413,14 +318,12 @@
         var fd = new FormData();
         fd.append('body', body);
         if (close) fd.append('close', '1');
-        if (state.file) fd.append('file', state.file);
 
         var btns = $$('[data-send]', els.convo);
         btns.forEach(function (b) { b.disabled = true; b.classList.add('is-loading'); });
         var id = state.current;
 
         K.api('tickets/' + id + '/replies', { method: 'POST', form: fd }).then(function (t) {
-            state.file = null;
             if (state.current !== id) return;
             ta.value = '';
             show(t, false);
@@ -432,8 +335,6 @@
         });
     }
 
-    /* ═════════════ Composer helpers ═════════════ */
-
     function composerValue() {
         var ta = $('[data-composer-input]', els.convo);
         return ta ? ta.value : '';
@@ -444,46 +345,20 @@
         ta.style.height = Math.min(ta.scrollHeight + 2, 320) + 'px';
     }
 
-    function renderFile() {
-        var box = $('[data-composer-files]', els.convo);
-        if (!box) return;
-        box.innerHTML = state.file ? '<span class="tkm-chip tkm-chip--file">' + icon('file', 12) + '<span class="tkm-ltr">' + esc(state.file.name) + '</span><button type="button" class="tkm-chip__x" data-file-remove aria-label="حذف فایل">×</button></span>' : '';
-    }
-
-    function setFile(f) {
-        if (!f) return;
-        var up = state.meta.upload;
-        if (up.max_size && f.size > up.max_size) {
-            K.toast('error', 'فایل بزرگ است', f.name + ' — ' + (up.hint || ''));
-            return;
-        }
-        state.file = f;
-        renderFile();
-    }
-
     /* ═════════════ Routing ═════════════ */
 
     function route() {
         var h = (location.hash || '').replace(/^#\/?/, '').split('/');
-        var kind = h[0], id = h[1];
-
-        if (kind === 'ticket' && id) {
+        if (h[0] === 'ticket' && h[1]) {
             if (!state.items.length && !state.loading) loadList();
-            openTicket(id);
+            openTicket(h[1]);
             return;
         }
-
-        var scope = { view: 'active' };
-        if (kind === 'view' && VIEW_LABEL[id]) scope = { view: id };
-        else if (kind === 'department' && id) scope = { view: 'all', department: +id };
-        state.scope = scope;
-        if (state.meta) renderNav();
+        state.view = h[0] === 'view' && VIEW_LABEL[h[1]] ? h[1] : 'active';
+        renderNav();
         loadList();
     }
 
-    function lastScopeHash() {
-        return state.scope.department ? '/department/' + state.scope.department : '/view/' + state.scope.view;
-    }
     function setHash(h) {
         if (location.hash.replace(/^#/, '') === h) route(); else location.hash = h;
     }
@@ -491,28 +366,14 @@
     /* ═════════════ Events ═════════════ */
 
     root.addEventListener('click', function (e) {
-        var t = e.target;
-        var el;
-
+        var t = e.target, el;
         if ((el = t.closest('.tkm-ib-item[data-id]'))) { setHash('/ticket/' + el.getAttribute('data-id')); return; }
-        if (t.closest('[data-more]')) { t.closest('[data-more]').classList.add('is-loading'); loadList({ append: true }); return; }
+        if (t.closest('[data-more]')) { t.closest('[data-more]').classList.add('is-loading'); loadList(true); return; }
         if (t.closest('[data-retry]')) { loadList(); return; }
-        if (t.closest('[data-clear-filters]')) {
-            state.filters.search = ''; state.filters.priority = '';
-            els.search.value = ''; $('[data-filter="priority"]').value = '';
-            loadList();
-            return;
-        }
-        if (t.closest('[data-back]')) { setHash(lastScopeHash()); closeTicket(); return; }
+        if (t.closest('[data-back]')) { setHash('/view/' + state.view); closeTicket(); return; }
         if (t.closest('[data-side-toggle]')) { root.classList.toggle('show-side'); return; }
-        if ((el = t.closest('[data-set-status]'))) {
-            var st = el.getAttribute('data-set-status');
-            patch({ status: st }, STATUS_MSG[st]);
-            return;
-        }
-        if ((el = t.closest('[data-priority]'))) { patch({ priority: el.getAttribute('data-priority') }); return; }
+        if ((el = t.closest('[data-set-status]'))) { setStatus(el.getAttribute('data-set-status')); return; }
         if ((el = t.closest('[data-send]'))) { send(el.getAttribute('data-send') === 'close'); return; }
-        if (t.closest('[data-file-remove]')) { state.file = null; renderFile(); return; }
         if (t.closest('[data-delete-ticket]')) {
             K.confirm('تیکت #' + fa(state.current) + ' و همه پیام‌هایش برای همیشه حذف می‌شود.').then(function () {
                 var id = state.current;
@@ -521,7 +382,7 @@
                     state.items = state.items.filter(function (r) { return r.id !== id; });
                     state.total = Math.max(0, state.total - 1);
                     renderList();
-                    setHash(lastScopeHash());
+                    setHash('/view/' + state.view);
                     closeTicket();
                     refreshCounts();
                 }).catch(function (err) { K.toast('error', 'حذف نشد', err.message); });
@@ -531,57 +392,24 @@
 
     root.addEventListener('change', function (e) {
         var t = e.target;
-        if (t.matches('[data-filter]')) {
-            state.filters[t.getAttribute('data-filter')] = t.value;
-            loadList();
-            return;
-        }
         if (t.matches('[data-scope-select]')) { location.hash = t.value.replace(/^#/, ''); return; }
-        if (t.matches('[data-prop]')) {
-            var key = t.getAttribute('data-prop');
-            var change = {};
-            change[key] = t.value;
-            patch(change, key === 'department_id' ? 'دپارتمان تغییر کرد' : null);
-            return;
-        }
-        if (t.matches('[data-composer-file]')) { setFile(t.files[0]); t.value = ''; }
+        if (t.matches('[data-prop="status"]')) setStatus(t.value);
     });
 
     root.addEventListener('input', function (e) {
         if (e.target.matches('[data-composer-input]')) autosize(e.target);
-        if (e.target === els.search) searchSoon();
     });
-    var searchSoon = K.debounce(function () {
-        state.filters.search = els.search.value.trim();
-        loadList();
-    }, 300);
 
     root.addEventListener('keydown', function (e) {
-        var t = e.target;
-        if (t.matches('[data-composer-input]') && (e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (e.target.matches('[data-composer-input]') && (e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             send(false);
         }
-        if (t === els.search && e.key === 'Escape') { els.search.value = ''; searchSoon(); els.search.blur(); }
-    });
-
-    // Drag & drop a file onto the composer.
-    root.addEventListener('dragover', function (e) {
-        var c = e.target.closest && e.target.closest('[data-composer]');
-        if (c && e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') !== -1) { e.preventDefault(); c.classList.add('is-over'); }
-    });
-    root.addEventListener('dragleave', function (e) {
-        var c = e.target.closest && e.target.closest('[data-composer]');
-        if (c) c.classList.remove('is-over');
-    });
-    root.addEventListener('drop', function (e) {
-        var c = e.target.closest && e.target.closest('[data-composer]');
-        if (c && e.dataTransfer.files.length) { e.preventDefault(); c.classList.remove('is-over'); setFile(e.dataTransfer.files[0]); }
     });
 
     window.addEventListener('hashchange', route);
     window.addEventListener('beforeunload', function (e) {
-        if (composerValue().trim() || state.file) { e.preventDefault(); e.returnValue = ''; }
+        if (composerValue().trim()) { e.preventDefault(); e.returnValue = ''; }
     });
 
     /* ═════════════ Boot ═════════════ */

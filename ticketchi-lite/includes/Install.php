@@ -18,13 +18,10 @@ final class Install
         self::create_tables();
         Settings::ensure_defaults();
         update_option(self::DB_OPTION, self::DB_VERSION, false);
-        // The WooCommerce endpoint is registered on init; flush after it exists.
-        update_option('ticketchi_lite_flush_rewrite', 1, false);
     }
 
     public static function deactivate()
     {
-        flush_rewrite_rules(false);
     }
 
     public static function maybe_upgrade()

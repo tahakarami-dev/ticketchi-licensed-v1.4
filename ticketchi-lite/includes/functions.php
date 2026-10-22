@@ -216,18 +216,6 @@ function ticketchi_lite_status_badge($status)
     return '<span class="tkm-badge" data-status="' . esc_attr($s['slug']) . '" style="--c:' . esc_attr($s['color']) . '">' . esc_html($s['name']) . '</span>';
 }
 
-function ticketchi_lite_priority_name($priority)
-{
-    $names = ['low' => 'کم', 'medium' => 'متوسط', 'high' => 'زیاد'];
-    return isset($names[$priority]) ? $names[$priority] : '';
-}
-
-function ticketchi_lite_priority_badge($priority)
-{
-    $priority = in_array($priority, ['low', 'medium', 'high'], true) ? $priority : 'medium';
-    return '<span class="tkm-priority tkm-priority--' . esc_attr($priority) . '"><span class="tkm-priority__bars"><i></i><i></i><i></i></span>' . esc_html(ticketchi_lite_priority_name($priority)) . '</span>';
-}
-
 function ticketchi_lite_avatar($user_id, $size = '')
 {
     return \TicketchiLite\Avatars::html($user_id, $size);

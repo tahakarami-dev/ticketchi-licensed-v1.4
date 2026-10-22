@@ -13,6 +13,11 @@ $ticketchi_lite_nav = [
     'ticketchi-lite-departments' => ['label' => 'دپارتمان‌ها', 'icon' => 'layers'],
     'ticketchi-lite-settings'    => ['label' => 'تنظیمات', 'icon' => 'settings'],
 ];
+// Screens that only exist in Ticketchi Pro: shown as links to the upgrade page.
+$ticketchi_lite_pro_nav = [
+    'reports'     => ['label' => 'گزارش‌ها', 'icon' => 'bar-chart'],
+    'automation'  => ['label' => 'اتوماسیون', 'icon' => 'zap'],
+];
 $ticketchi_lite_kses = ticketchi_lite_allowed_html();
 ?>
 <div class="tkm-ui tkm-admin <?php echo esc_attr(isset($ticketchi_lite_shell) ? $ticketchi_lite_shell : ''); ?>" data-theme="light" id="tkm-admin">
@@ -34,16 +39,19 @@ $ticketchi_lite_kses = ticketchi_lite_allowed_html();
                     <span><?php echo esc_html($ticketchi_lite_item['label']); ?></span>
                 </a>
             <?php endforeach; ?>
+            <?php foreach ($ticketchi_lite_pro_nav as $ticketchi_lite_anchor => $ticketchi_lite_item) : ?>
+                <a class="tkm-nav__item tkm-nav__item--pro" href="<?php echo esc_url(ticketchi_lite_admin_url('ticketchi-lite-pro') . '#pro-' . $ticketchi_lite_anchor); ?>" title="در نسخه حرفه‌ای">
+                    <?php echo wp_kses(ticketchi_lite_icon($ticketchi_lite_item['icon'], 17), $ticketchi_lite_kses); ?>
+                    <span><?php echo esc_html($ticketchi_lite_item['label']); ?></span>
+                    <span class="tkm-pro-tag">PRO</span>
+                </a>
+            <?php endforeach; ?>
         </nav>
 
         <div class="tkm-topbar__actions">
             <a class="tkm-btn tkm-btn--soft tkm-pro-cta <?php echo $ticketchi_lite_current === 'ticketchi-lite-pro' ? 'is-active' : ''; ?>" href="<?php echo esc_url(ticketchi_lite_admin_url('ticketchi-lite-pro')); ?>">
                 <?php echo wp_kses(ticketchi_lite_icon('crown', 16), $ticketchi_lite_kses); ?><span class="tkm-hide-sm">نسخه حرفه‌ای</span>
             </a>
-            <button type="button" class="tkm-btn tkm-btn--ghost tkm-btn--icon" data-theme-toggle aria-label="تغییر حالت روشن / تاریک" title="حالت روشن / تاریک">
-                <span class="tkm-theme-dark"><?php echo wp_kses(ticketchi_lite_icon('moon', 18), $ticketchi_lite_kses); ?></span>
-                <span class="tkm-theme-light"><?php echo wp_kses(ticketchi_lite_icon('sun', 18), $ticketchi_lite_kses); ?></span>
-            </button>
             <div class="tkm-usermenu" data-usermenu>
                 <button type="button" class="tkm-usermenu__btn" data-usermenu-toggle aria-haspopup="true" aria-expanded="false" aria-label="حساب کاربری">
                     <?php echo wp_kses(ticketchi_lite_avatar($ticketchi_lite_me->ID, 'sm'), $ticketchi_lite_kses); ?>

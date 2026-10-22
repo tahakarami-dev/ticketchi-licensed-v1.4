@@ -34,7 +34,7 @@ include TICKETCHI_LITE_PATH . 'views/admin/partials/header.php';
         <?php endforeach; ?>
         <div class="tkm-st-nav__pro">
             <span class="tkm-st-nav__pro-title"><?php echo wp_kses(ticketchi_lite_icon('crown', 14), $ticketchi_lite_kses); ?> در نسخه حرفه‌ای</span>
-            <?php foreach (['تیم و تخصیص خودکار' => 'team', 'SLA و ساعات کاری' => 'sla', 'پاسخ‌های آماده' => 'canned', 'سوالات متداول' => 'customer-ux', 'پیامک' => 'sms', 'پایگاه دانش' => 'kb'] as $ticketchi_lite_label => $ticketchi_lite_anchor) : ?>
+            <?php foreach (['ظاهر و رنگ برند' => 'brand', 'پیوست فایل' => 'customer-ux', 'ووکامرس' => 'woocommerce', 'تیم و تخصیص خودکار' => 'team', 'SLA و ساعات کاری' => 'sla', 'پاسخ‌های آماده' => 'canned', 'وضعیت‌های اختصاصی' => 'brand', 'پیامک' => 'sms', 'پایگاه دانش' => 'kb'] as $ticketchi_lite_label => $ticketchi_lite_anchor) : ?>
                 <a class="tkm-st-nav__item tkm-st-nav__item--pro" href="<?php echo esc_url(ticketchi_lite_admin_url('ticketchi-lite-pro') . '#pro-' . $ticketchi_lite_anchor); ?>">
                     <span class="tkm-st-nav__icon"><?php echo wp_kses(ticketchi_lite_icon('lock', 15), $ticketchi_lite_kses); ?></span>
                     <span><?php echo esc_html($ticketchi_lite_label); ?></span>
@@ -47,7 +47,7 @@ include TICKETCHI_LITE_PATH . 'views/admin/partials/header.php';
         <form class="tkm-st-main" data-settings-form novalidate autocomplete="off">
             <div class="tkm-card tkm-ib-loading" style="min-height:360px"><span class="tkm-spinner"></span></div>
         </form>
-        <?php echo wp_kses(Promo::teaser('settings', 'پیامک، SLA و پاسخ‌های آماده', 'با نسخه حرفه‌ای به مشتری پیامک بفرستید، برای پاسخ مهلت تعیین کنید و جواب‌های تکراری را با یک کلیک ارسال کنید.'), $ticketchi_lite_kses); ?>
+        <?php echo wp_kses(Promo::teaser('settings', '۱۳ بخش تنظیمات در نسخه حرفه‌ای', 'رنگ برند، پیوست فایل، ووکامرس، پیامک، SLA، پاسخ‌های آماده و وضعیت‌های اختصاصی؛ پشتیبانی را دقیقاً همان‌طور که می‌خواهید بچینید.'), $ticketchi_lite_kses); ?>
     </div>
 </div>
 

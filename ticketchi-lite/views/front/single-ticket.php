@@ -29,7 +29,6 @@ $ticketchi_lite_dep = Departments::find($ticket->department_id);
 $ticketchi_lite_parent = ($ticketchi_lite_dep && $ticketchi_lite_dep->parent) ? Departments::find($ticketchi_lite_dep->parent) : null;
 $replies = Tickets::replies($ticket->ID);
 $ticketchi_lite_final = $ticket->status === 'finish';
-$ticketchi_lite_attach_id = 'tkm-reply-file';
 ?>
 <div class="tkm-ui tkm-app" data-view="single">
 
@@ -43,7 +42,6 @@ $ticketchi_lite_attach_id = 'tkm-reply-file';
             <span class="tkm-num"><?php echo wp_kses(ticketchi_lite_icon('hash', 14), $ticketchi_lite_kses); ?><?php echo esc_html(ticketchi_lite_fa($ticket->ID)); ?></span>
             <span><?php echo wp_kses(ticketchi_lite_icon('building', 14), $ticketchi_lite_kses); ?><?php echo esc_html($ticketchi_lite_dep ? $ticketchi_lite_dep->name : '—'); ?></span>
             <span><?php echo wp_kses(ticketchi_lite_icon('calendar', 14), $ticketchi_lite_kses); ?><?php echo esc_html(ticketchi_lite_date($ticket->create_date, false)); ?></span>
-            <?php echo wp_kses(ticketchi_lite_priority_badge($ticket->priority), $ticketchi_lite_kses); ?>
         </div>
     </header>
 
@@ -81,7 +79,6 @@ $ticketchi_lite_attach_id = 'tkm-reply-file';
                         <label class="tkm-sr" for="body">متن پاسخ</label>
                         <textarea class="tkm-composer__input" id="body" name="body" rows="3" placeholder="پاسخ خود را بنویسید…" data-autogrow></textarea>
                     </div>
-                    <?php include TICKETCHI_LITE_PATH . 'views/front/attach.php'; ?>
                     <div class="tkm-composer__foot">
                         <label class="tkm-switch">
                             <input type="checkbox" name="status" id="status" value="closed">
@@ -104,7 +101,6 @@ $ticketchi_lite_attach_id = 'tkm-reply-file';
                 <dl class="tkm-kv">
                     <div><dt>شناسه</dt><dd class="tkm-num"><?php echo esc_html(ticketchi_lite_ticket_number($ticket->ID)); ?></dd></div>
                     <div><dt>وضعیت</dt><dd data-status-badge><?php echo wp_kses(ticketchi_lite_status_badge($ticket->status), $ticketchi_lite_kses); ?></dd></div>
-                    <div><dt>اولویت</dt><dd><?php echo wp_kses(ticketchi_lite_priority_badge($ticket->priority), $ticketchi_lite_kses); ?></dd></div>
                     <div><dt>دپارتمان</dt><dd><?php echo esc_html(($ticketchi_lite_parent ? $ticketchi_lite_parent->name . ' / ' : '') . ($ticketchi_lite_dep ? $ticketchi_lite_dep->name : '—')); ?></dd></div>
                     <div><dt>ایجاد کننده</dt><dd class="tkm-row tkm-kv__user"><?php echo wp_kses(ticketchi_lite_avatar($ticket->creator_id, 'sm'), $ticketchi_lite_kses); ?><?php echo esc_html(ticketchi_lite_user_name($ticket->creator_id)); ?></dd></div>
                     <div><dt>تاریخ ایجاد</dt><dd><?php echo esc_html(ticketchi_lite_date($ticket->create_date)); ?></dd></div>

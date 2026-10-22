@@ -61,26 +61,17 @@ final class Rest
         return [
             'me'          => Presenter::user(get_current_user_id()),
             'statuses'    => $statuses,
-            'departments' => Departments::tree(),
-            'upload'      => [
-                'max_size' => Uploads::max_size_bytes(),
-                'accept'   => Uploads::accept_attr(),
-                'hint'     => Uploads::hint(),
-            ],
             'counts'      => Query::view_counts(),
+            'pro_url'     => Promo::url('inbox'),
         ];
     }
 
     public static function inbox(WP_REST_Request $r)
     {
         $args = [
-            'view'       => sanitize_key((string) $r->get_param('view')) ?: 'active',
-            'department' => absint($r->get_param('department')),
-            'priority'   => sanitize_key((string) $r->get_param('priority')),
-            'search'     => sanitize_text_field((string) $r->get_param('search')),
-            'sort'       => sanitize_key((string) $r->get_param('sort')) ?: 'updated',
-            'page'       => absint($r->get_param('page')) ?: 1,
-            'per_page'   => absint($r->get_param('per_page')) ?: 30,
+            'view'     => sanitize_key((string) $r->get_param('view')) ?: 'active',
+            'page'     => absint($r->get_param('page')) ?: 1,
+            'per_page' => absint($r->get_param('per_page')) ?: 30,
         ];
 
         $result = Query::run($args);
@@ -114,10 +105,9 @@ final class Rest
         }
 
         $params = $r->get_json_params() ?: $r->get_body_params();
-        $changes = array_intersect_key((array) $params, array_flip(['status', 'priority', 'department_id']));
-        $changes = array_map(function ($v) {
-            return is_scalar($v) ? sanitize_key((string) $v) : '';
-        }, $changes);
+        // Lite edits the status only; priority, department and assignee are Ticketchi Pro.
+        $status = isset($params['status']) && is_scalar($params['status']) ? sanitize_key((string) $params['status']) : '';
+        $changes = $status !== '' ? ['status' => $status] : [];
 
         $result = Tickets::update($ticket->ID, $changes, get_current_user_id());
         if (is_wp_error($result)) {
@@ -139,13 +129,7 @@ final class Rest
             $body = make_clickable(wpautop(esc_html($body)));
         }
 
-        $files = $r->get_file_params();
-        $file = Uploads::handle(isset($files['file']) ? $files['file'] : null);
-        if (is_wp_error($file)) {
-            return self::fail($file->get_error_message());
-        }
-
-        $data = ['body' => $body, 'file' => $file];
+        $data = ['body' => $body];
         if (filter_var($r->get_param('close'), FILTER_VALIDATE_BOOLEAN)) {
             $data['status'] = 'closed';
         }

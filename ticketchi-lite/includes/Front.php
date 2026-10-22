@@ -5,15 +5,15 @@ namespace TicketchiLite;
 defined('ABSPATH') || exit;
 
 /**
- * Customer panel: the [ticketchi] shortcode, the WooCommerce «My account ›
- * Tickets» endpoint, and the AJAX endpoints behind its forms.
+ * Customer panel: the [ticketchi] shortcode and the AJAX endpoints behind
+ * its forms.
  */
 final class Front
 {
     const NONCE = 'ticketchi_lite_front';
 
-    /** Where the panel is being rendered right now: shortcode|account|null */
-    private static $context = null;
+    /** True while the shortcode is being rendered. */
+    private static $rendering = false;
 
     public static function register()
     {
@@ -29,12 +29,6 @@ final class Front
         add_action('wp_ajax_ticketchi_lite_submit_ticket', [__CLASS__, 'ajax_submit_ticket']);
         add_action('wp_ajax_ticketchi_lite_submit_reply', [__CLASS__, 'ajax_submit_reply']);
 
-        // WooCommerce «My account» endpoint.
-        add_action('init', [__CLASS__, 'add_endpoint']);
-        add_filter('woocommerce_get_query_vars', [__CLASS__, 'query_vars']);
-        add_filter('woocommerce_account_menu_items', [__CLASS__, 'account_menu']);
-        add_filter('woocommerce_endpoint_tickets_title', [__CLASS__, 'endpoint_title']);
-        add_action('woocommerce_account_tickets_endpoint', [__CLASS__, 'account_page']);
         add_action('save_post_page', [__CLASS__, 'forget_shortcode_page']);
     }
 
@@ -42,24 +36,11 @@ final class Front
 
     public static function shortcode()
     {
-        $previous = self::$context;
-        self::$context = 'shortcode';
+        $previous = self::$rendering;
+        self::$rendering = true;
         self::enqueue();
         ob_start();
-        self::render();
-        self::$context = $previous;
-        return ob_get_clean();
-    }
 
-    public static function account_page()
-    {
-        self::$context = 'account';
-        self::enqueue();
-        self::render();
-    }
-
-    private static function render()
-    {
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only routing.
         $action = isset($_GET['action']) ? sanitize_key(wp_unslash($_GET['action'])) : '';
         $has_ticket = !empty($_GET['ticket-id']);
@@ -75,16 +56,16 @@ final class Front
             $view = 'tickets';
         }
         include TICKETCHI_LITE_PATH . 'views/front/' . $view . '.php';
+
+        self::$rendering = $previous;
+        return ob_get_clean();
     }
 
-    /** Base URL of the customer panel in the current (or best guess) context. */
+    /** Base URL of the customer panel. */
     public static function base_url()
     {
-        if (self::$context === 'shortcode') {
+        if (self::$rendering) {
             return get_permalink();
-        }
-        if (self::$context === 'account' || (function_exists('wc_get_endpoint_url') && get_option('woocommerce_myaccount_page_id'))) {
-            return wc_get_endpoint_url('tickets', '', get_permalink(get_option('woocommerce_myaccount_page_id')));
         }
         $page = self::shortcode_page();
         return $page ? get_permalink($page) : home_url('/');
@@ -117,87 +98,28 @@ final class Front
         }
         wp_register_style('ticketchi-lite-ui', TICKETCHI_LITE_URL . 'assets/css/ui.css', [], TICKETCHI_LITE_VERSION);
         wp_register_style('ticketchi-lite-front', TICKETCHI_LITE_URL . 'assets/css/front.css', ['ticketchi-lite-ui'], TICKETCHI_LITE_VERSION);
-        wp_add_inline_style('ticketchi-lite-front', self::brand_css());
 
         wp_register_script('ticketchi-lite-front', TICKETCHI_LITE_URL . 'assets/js/front.js', ['jquery'], TICKETCHI_LITE_VERSION, true);
         wp_localize_script('ticketchi-lite-front', 'TICKETCHI_LITE_FRONT', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce(self::NONCE),
-            'upload'   => [
-                'max_size'    => Uploads::max_size_bytes(),
-                'allowed_ext' => Uploads::allowed_extensions(),
-            ],
         ]);
     }
 
     public static function maybe_enqueue()
     {
         $post = get_post();
-        $has_shortcode = $post && (has_shortcode((string) $post->post_content, 'ticketchi') || has_shortcode((string) $post->post_content, 'tickets'));
-        if ($has_shortcode || (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('tickets'))) {
+        if ($post && (has_shortcode((string) $post->post_content, 'ticketchi') || has_shortcode((string) $post->post_content, 'tickets'))) {
             self::enqueue();
         }
     }
 
-    /** Also called from the views, for page builders and block themes. */
+    /** Also called while rendering, for page builders and block themes. */
     public static function enqueue()
     {
         self::register_assets();
         wp_enqueue_style('ticketchi-lite-front');
         wp_enqueue_script('ticketchi-lite-front');
-    }
-
-    /** Brand colours from the settings as CSS custom properties. */
-    public static function brand_css()
-    {
-        $vars = [];
-        $primary = sanitize_hex_color(Settings::get('primary_color'));
-        $hover = sanitize_hex_color(Settings::get('secondary_color'));
-        $on_primary = sanitize_hex_color(Settings::get('text_color'));
-
-        if ($primary) {
-            $vars[] = '--tkm-primary:' . $primary;
-        }
-        if ($hover && strlen($hover) === 7 && strtolower($hover) !== strtolower((string) $primary)) {
-            $vars[] = '--tkm-primary-hover:' . $hover;
-        }
-        if ($on_primary) {
-            $vars[] = '--tkm-on-primary:' . $on_primary;
-        }
-        return $vars ? '.tkm-ui{' . implode(';', $vars) . '}' : '';
-    }
-
-    /* ───────────── WooCommerce ───────────── */
-
-    public static function add_endpoint()
-    {
-        add_rewrite_endpoint('tickets', EP_PAGES);
-        if (get_option('ticketchi_lite_flush_rewrite')) {
-            delete_option('ticketchi_lite_flush_rewrite');
-            flush_rewrite_rules(false);
-        }
-    }
-
-    public static function query_vars($vars)
-    {
-        $vars['tickets'] = 'tickets';
-        return $vars;
-    }
-
-    public static function endpoint_title()
-    {
-        return 'تیکت‌های پشتیبانی';
-    }
-
-    public static function account_menu($items)
-    {
-        $logout = isset($items['customer-logout']) ? $items['customer-logout'] : null;
-        unset($items['customer-logout']);
-        $items['tickets'] = 'تیکت‌های پشتیبانی';
-        if ($logout) {
-            $items['customer-logout'] = $logout;
-        }
-        return $items;
     }
 
     /* ───────────── AJAX ───────────── */
@@ -206,13 +128,6 @@ final class Front
     {
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in guard().
         return isset($_POST[$key]) ? wp_unslash($_POST[$key]) : '';
-    }
-
-    /** The «file» upload; validated by Uploads::handle() and wp_handle_upload(). */
-    private static function uploaded_file()
-    {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified in guard(); the file is validated on upload.
-        return isset($_FILES['file']) && is_array($_FILES['file']) ? $_FILES['file'] : null;
     }
 
     private static function guard()
@@ -229,17 +144,10 @@ final class Front
     {
         self::guard();
 
-        $file = Uploads::handle(self::uploaded_file());
-        if (is_wp_error($file)) {
-            wp_send_json(['success' => false, 'result' => $file->get_error_message()]);
-        }
-
         $id = Tickets::create([
             'title'         => sanitize_text_field(self::post('title_ticket')),
             'body'          => wp_kses_post(self::post('content')),
-            'priority'      => sanitize_key(self::post('priority')),
             'department_id' => absint(self::post('department')),
-            'file'          => $file,
         ], get_current_user_id());
 
         if (is_wp_error($id)) {
@@ -262,17 +170,10 @@ final class Front
             wp_send_json(['success' => false, 'result' => 'این تیکت پایان یافته و امکان پاسخ به آن وجود ندارد.']);
         }
 
-        $file = Uploads::handle(self::uploaded_file());
-        if (is_wp_error($file)) {
-            wp_send_json(['success' => false, 'result' => $file->get_error_message()]);
-        }
-
         // Customers can keep the ticket open or close it themselves.
-        $status = self::post('status') === 'closed' ? 'closed' : 'open';
         $result = Tickets::reply($ticket->ID, [
             'body'   => wp_kses_post(self::post('body')),
-            'file'   => $file,
-            'status' => $status,
+            'status' => self::post('status') === 'closed' ? 'closed' : 'open',
         ], $user_id);
 
         if (is_wp_error($result)) {

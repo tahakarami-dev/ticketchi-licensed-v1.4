@@ -105,12 +105,7 @@ final class Admin
         wp_enqueue_style('ticketchi-lite-ui', $url . 'css/ui.css', [], $v);
         wp_enqueue_style('ticketchi-lite-admin', $url . 'css/admin.css', ['ticketchi-lite-ui'], $v);
         wp_enqueue_style('ticketchi-lite-app', $url . 'css/app.css', ['ticketchi-lite-admin'], $v);
-        wp_add_inline_style('ticketchi-lite-app', Front::brand_css() . self::fullscreen_css());
-
-        // Restore the dark theme before the first paint.
-        wp_register_script('ticketchi-lite-theme', false, [], $v, false);
-        wp_enqueue_script('ticketchi-lite-theme');
-        wp_add_inline_script('ticketchi-lite-theme', "try{if(localStorage.getItem('tkm-theme')==='dark'){document.documentElement.classList.add('tkm-dark');}}catch(e){}");
+        wp_add_inline_style('ticketchi-lite-app', self::fullscreen_css());
 
         wp_enqueue_script('ticketchi-lite-admin', $url . 'js/admin.js', ['jquery'], $v, true);
 

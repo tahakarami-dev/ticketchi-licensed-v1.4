@@ -8,8 +8,7 @@ use TicketchiLite\Departments;
 use TicketchiLite\Settings;
 
 $ticketchi_lite_kses = ticketchi_lite_allowed_html();
-$ticketchi_lite_parents = Departments::parents();
-$ticketchi_lite_attach_id = 'tkm-new-file';
+$ticketchi_lite_parents = Departments::all();
 ?>
 <div class="tkm-ui tkm-app" data-view="new">
 
@@ -39,34 +38,15 @@ $ticketchi_lite_attach_id = 'tkm-new-file';
                 </div>
 
                 <div class="tkm-tiles" role="radiogroup" aria-label="دپارتمان">
-                    <?php foreach ($ticketchi_lite_parents as $ticketchi_lite_dep) :
-                        $ticketchi_lite_children = Departments::children($ticketchi_lite_dep->ID); ?>
+                    <?php foreach ($ticketchi_lite_parents as $ticketchi_lite_dep) : ?>
                         <label class="tkm-tile">
-                            <input type="radio" name="tkm-parent-department" value="<?php echo esc_attr($ticketchi_lite_dep->ID); ?>" data-has-children="<?php echo $ticketchi_lite_children ? '1' : '0'; ?>" data-description="<?php echo esc_attr(trim((string) $ticketchi_lite_dep->description)); ?>">
+                            <input type="radio" name="tkm-parent-department" value="<?php echo esc_attr($ticketchi_lite_dep->ID); ?>" data-description="<?php echo esc_attr(trim((string) $ticketchi_lite_dep->description)); ?>">
                             <span class="tkm-tile__box">
                                 <span class="tkm-tile__icon"><?php echo wp_kses(ticketchi_lite_icon('building', 18), $ticketchi_lite_kses); ?></span>
                                 <span class="tkm-tile__name"><?php echo esc_html($ticketchi_lite_dep->name); ?></span>
                                 <span class="tkm-tile__check"><?php echo wp_kses(ticketchi_lite_icon('check', 14), $ticketchi_lite_kses); ?></span>
                             </span>
                         </label>
-                    <?php endforeach; ?>
-                </div>
-
-                <div class="tkm-field tkm-subdeps" data-subdeps hidden>
-                    <span class="tkm-label">نوع تیکت <span class="tkm-req">*</span></span>
-                    <?php foreach ($ticketchi_lite_parents as $ticketchi_lite_dep) :
-                        $ticketchi_lite_children = Departments::children($ticketchi_lite_dep->ID);
-                        if (!$ticketchi_lite_children) {
-                            continue;
-                        } ?>
-                        <div class="tkm-chips" data-parent="<?php echo esc_attr($ticketchi_lite_dep->ID); ?>" hidden>
-                            <?php foreach ($ticketchi_lite_children as $ticketchi_lite_child) : ?>
-                                <label class="tkm-chip">
-                                    <input type="radio" name="child-department" value="<?php echo esc_attr($ticketchi_lite_child->ID); ?>" data-description="<?php echo esc_attr(trim((string) $ticketchi_lite_child->description)); ?>">
-                                    <span><?php echo esc_html($ticketchi_lite_child->name); ?></span>
-                                </label>
-                            <?php endforeach; ?>
-                        </div>
                     <?php endforeach; ?>
                 </div>
 
@@ -92,22 +72,10 @@ $ticketchi_lite_attach_id = 'tkm-new-file';
                     </div>
 
                     <div class="tkm-field tkm-col-span">
-                        <span class="tkm-label">اهمیت تیکت</span>
-                        <div class="tkm-segmented tkm-segmented--priority" role="radiogroup">
-                            <?php foreach (['low', 'medium', 'high'] as $ticketchi_lite_p) : ?>
-                                <label><input type="radio" name="priority" value="<?php echo esc_attr($ticketchi_lite_p); ?>" <?php checked($ticketchi_lite_p, 'medium'); ?>><span><?php echo wp_kses(ticketchi_lite_priority_badge($ticketchi_lite_p), $ticketchi_lite_kses); ?></span></label>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
-                    <div class="tkm-field tkm-col-span">
                         <label class="tkm-label" for="ticket-content">توضیحات <span class="tkm-req">*</span></label>
                         <textarea class="tkm-textarea" id="ticket-content" name="content" rows="7" placeholder="مشکل را شرح دهید؛ مراحلی که انجام دادید، پیام خطا و هر جزئیاتی که کمک می‌کند…" data-autogrow></textarea>
                     </div>
 
-                    <div class="tkm-field tkm-col-span">
-                        <?php include TICKETCHI_LITE_PATH . 'views/front/attach.php'; ?>
-                    </div>
                 </div>
             </div>
 

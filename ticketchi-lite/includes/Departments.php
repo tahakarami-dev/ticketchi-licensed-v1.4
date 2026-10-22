@@ -18,19 +18,19 @@ final class Departments
     public static function all()
     {
         global $wpdb;
-        return $wpdb->get_results('SELECT * FROM ' . self::table() . ' ORDER BY position, ID');
+        return $wpdb->get_results($wpdb->prepare('SELECT * FROM %i ORDER BY position, ID', self::table()));
     }
 
     public static function parents()
     {
         global $wpdb;
-        return $wpdb->get_results('SELECT * FROM ' . self::table() . ' WHERE parent = 0 ORDER BY position, ID');
+        return $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE parent = 0 ORDER BY position, ID', self::table()));
     }
 
     public static function children($parent_id)
     {
         global $wpdb;
-        return $wpdb->get_results($wpdb->prepare('SELECT * FROM ' . self::table() . ' WHERE parent = %d ORDER BY position, ID', (int) $parent_id));
+        return $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE parent = %d ORDER BY position, ID', self::table(), (int) $parent_id));
     }
 
     public static function find($id)
@@ -42,7 +42,7 @@ final class Departments
         }
         if (!array_key_exists($id, $cache)) {
             global $wpdb;
-            $cache[$id] = $wpdb->get_row($wpdb->prepare('SELECT * FROM ' . self::table() . ' WHERE ID = %d', $id));
+            $cache[$id] = $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE ID = %d', self::table(), $id));
         }
         return $cache[$id];
     }
@@ -98,7 +98,7 @@ final class Departments
     public static function ticket_counts()
     {
         global $wpdb;
-        $rows = $wpdb->get_results('SELECT department_id, COUNT(*) AS total, SUM(CASE WHEN status = \'open\' THEN 1 ELSE 0 END) AS open_count FROM ' . Tickets::table() . ' WHERE status != \'trash\' GROUP BY department_id');
+        $rows = $wpdb->get_results($wpdb->prepare('SELECT department_id, COUNT(*) AS total, SUM(CASE WHEN status = %s THEN 1 ELSE 0 END) AS open_count FROM %i WHERE status != %s GROUP BY department_id', 'open', Tickets::table(), 'trash'));
         $counts = [];
         foreach ($rows as $row) {
             $counts[(int) $row->department_id] = ['total' => (int) $row->total, 'open' => (int) $row->open_count];

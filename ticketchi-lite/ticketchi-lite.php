@@ -4,7 +4,7 @@
  * Plugin URI:        https://wordpress.org/plugins/ticketchi-lite/
  * Description:       سیستم تیکت پشتیبانی فارسی و راست‌چین برای وردپرس و ووکامرس؛ ثبت و پیگیری تیکت توسط مشتری، صندوق پشتیبانی مدرن برای مدیر، دپارتمان‌ها، پیوست فایل و اعلان ایمیلی.
  * Version:           1.0.0
- * Requires at least: 5.8
+ * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Taha Karami
  * Author URI:        https://www.rtl-theme.com/author/taha-karami

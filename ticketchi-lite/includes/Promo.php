@@ -94,7 +94,7 @@ final class Promo
             return;
         }
         global $wpdb;
-        $count = (int) $wpdb->get_var('SELECT COUNT(*) FROM ' . Tickets::table());
+        $count = (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', Tickets::table()));
         if ($count < 5) {
             return;
         }

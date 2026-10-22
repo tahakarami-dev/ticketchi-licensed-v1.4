@@ -39,7 +39,7 @@ final class Notifier
         if (!$ticket) {
             return;
         }
-        $reply = $wpdb->get_row($wpdb->prepare('SELECT * FROM ' . Tickets::replies_table() . ' WHERE ID = %d', (int) $reply_id));
+        $reply = $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE ID = %d', Tickets::replies_table(), (int) $reply_id));
         $body = $reply ? $reply->body : '';
 
         if ($staff) {

@@ -29,7 +29,7 @@ final class Tickets
     public static function find($id)
     {
         global $wpdb;
-        return $id ? $wpdb->get_row($wpdb->prepare('SELECT * FROM ' . self::table() . ' WHERE ID = %d', (int) $id)) : null;
+        return $id ? $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE ID = %d', self::table(), (int) $id)) : null;
     }
 
     /** The customer a ticket belongs to (recipient for staff-initiated tickets). */
@@ -213,8 +213,10 @@ final class Tickets
     public static function replies($ticket_id, $include_internal = false)
     {
         global $wpdb;
-        $sql = 'SELECT * FROM ' . self::replies_table() . ' WHERE ticket_id = %d' . ($include_internal ? '' : ' AND (is_internal = 0 OR is_internal IS NULL)') . ' ORDER BY create_date ASC, ID ASC';
-        return $wpdb->get_results($wpdb->prepare($sql, (int) $ticket_id));
+        if ($include_internal) {
+            return $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE ticket_id = %d ORDER BY create_date ASC, ID ASC', self::replies_table(), (int) $ticket_id));
+        }
+        return $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE ticket_id = %d AND (is_internal = 0 OR is_internal IS NULL) ORDER BY create_date ASC, ID ASC', self::replies_table(), (int) $ticket_id));
     }
 
     /** Was this reply written by support? (rows from before v2 have no flag) */
@@ -229,35 +231,30 @@ final class Tickets
 
     /* ───────────── Customer panel ───────────── */
 
-    /** WHERE clause for «tickets of this customer». */
-    private static function customer_where($user_id)
-    {
-        global $wpdb;
-        return $wpdb->prepare("(creator_id = %d OR user_id = %d) AND status != 'trash'", (int) $user_id, (int) $user_id);
-    }
-
     /**
-     * @param array $args status, priority, orderby (reply-date|create-date), page
+     * @param array $args status (or 'all'), orderby (reply-date|create-date), page
      * @return array{items: object[], total: int, pages: int}
      */
     public static function for_customer($user_id, array $args, $per_page = 10)
     {
         global $wpdb;
-        $where = self::customer_where($user_id);
-        if (!empty($args['status']) && $args['status'] !== 'all') {
-            $where .= $wpdb->prepare(' AND status = %s', $args['status']);
-        }
-        if (!empty($args['priority']) && $args['priority'] !== 'all-priority') {
-            $where .= $wpdb->prepare(' AND priority = %s', $args['priority']);
-        }
-        $order = (isset($args['orderby']) && $args['orderby'] === 'create-date') ? 'create_date DESC, ID DESC' : 'reply_date DESC, ID DESC';
+        $user_id = (int) $user_id;
+        $status = !empty($args['status']) && $args['status'] !== 'all' ? (string) $args['status'] : '';
         $page = max(1, (int) ($args['page'] ?? 1));
+        $offset = ($page - 1) * $per_page;
+        $by_created = isset($args['orderby']) && $args['orderby'] === 'create-date';
 
-        $table = self::table();
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is built with prepare() above.
-        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE {$where}");
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is built with prepare() above.
-        $items = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$table} WHERE {$where} ORDER BY {$order} LIMIT %d OFFSET %d", $per_page, ($page - 1) * $per_page));
+        if ($status !== '') {
+            $total = (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i WHERE (creator_id = %d OR user_id = %d) AND status = %s', self::table(), $user_id, $user_id, $status));
+            $items = $by_created
+                ? $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE (creator_id = %d OR user_id = %d) AND status = %s ORDER BY create_date DESC, ID DESC LIMIT %d OFFSET %d', self::table(), $user_id, $user_id, $status, $per_page, $offset))
+                : $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE (creator_id = %d OR user_id = %d) AND status = %s ORDER BY reply_date DESC, ID DESC LIMIT %d OFFSET %d', self::table(), $user_id, $user_id, $status, $per_page, $offset));
+        } else {
+            $total = (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i WHERE (creator_id = %d OR user_id = %d) AND status != %s', self::table(), $user_id, $user_id, 'trash'));
+            $items = $by_created
+                ? $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE (creator_id = %d OR user_id = %d) AND status != %s ORDER BY create_date DESC, ID DESC LIMIT %d OFFSET %d', self::table(), $user_id, $user_id, 'trash', $per_page, $offset))
+                : $wpdb->get_results($wpdb->prepare('SELECT * FROM %i WHERE (creator_id = %d OR user_id = %d) AND status != %s ORDER BY reply_date DESC, ID DESC LIMIT %d OFFSET %d', self::table(), $user_id, $user_id, 'trash', $per_page, $offset));
+        }
 
         return ['items' => $items, 'total' => $total, 'pages' => (int) ceil($total / $per_page)];
     }
@@ -266,10 +263,7 @@ final class Tickets
     public static function customer_counts($user_id)
     {
         global $wpdb;
-        $table = self::table();
-        $where = self::customer_where($user_id);
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is built with prepare().
-        $rows = $wpdb->get_results("SELECT status, COUNT(*) AS c FROM {$table} WHERE {$where} GROUP BY status");
+        $rows = $wpdb->get_results($wpdb->prepare('SELECT status, COUNT(*) AS c FROM %i WHERE (creator_id = %d OR user_id = %d) AND status != %s GROUP BY status', self::table(), (int) $user_id, (int) $user_id, 'trash'));
         $counts = ['all' => 0];
         foreach ($rows as $row) {
             $counts[$row->status] = (int) $row->c;
@@ -286,8 +280,9 @@ final class Tickets
         if (!$ids) {
             return [];
         }
-        $in = implode(',', array_fill(0, count($ids), '%d'));
-        $rows = $wpdb->get_results($wpdb->prepare('SELECT ticket_id, COUNT(*) AS c FROM ' . self::replies_table() . " WHERE ticket_id IN ({$in}) AND (is_internal = 0 OR is_internal IS NULL) GROUP BY ticket_id", $ids));
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is a list of %d placeholders, one per id.
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT ticket_id, COUNT(*) AS c FROM %i WHERE ticket_id IN ({$placeholders}) AND (is_internal = 0 OR is_internal IS NULL) GROUP BY ticket_id", array_merge([self::replies_table()], $ids)));
         $out = [];
         foreach ($rows as $row) {
             $out[(int) $row->ticket_id] = (int) $row->c;

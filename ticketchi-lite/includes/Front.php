@@ -79,7 +79,7 @@ final class Front
             return (int) $cached;
         }
         global $wpdb;
-        $id = (int) $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type = 'page' AND (post_content LIKE '%[ticketchi%' OR post_content LIKE '%[tickets%') ORDER BY ID LIMIT 1");
+        $id = (int) $wpdb->get_var($wpdb->prepare('SELECT ID FROM %i WHERE post_status = %s AND post_type = %s AND (post_content LIKE %s OR post_content LIKE %s) ORDER BY ID LIMIT 1', $wpdb->posts, 'publish', 'page', '%[ticketchi%', '%[tickets%'));
         set_transient('ticketchi_lite_page', $id, DAY_IN_SECONDS);
         return $id;
     }
